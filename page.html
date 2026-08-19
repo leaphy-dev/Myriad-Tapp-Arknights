@@ -1,0 +1,41 @@
+<main id="tapp-content" class="page">
+  <!-- Home Page / 主页 -->
+  <section data-view="home" class="home-view">
+    <div class="ark-home-inner">
+      <h1 class="ark-title" data-i18n="title">明日方舟</h1>
+      <button type="button" class="ark-debug-btn" data-nav="debug" data-i18n="debug">Debug</button>
+    </div>
+  </section>
+
+  <!-- Debug Page / 调试页 -->
+  <section data-view="debug" class="debug-view" hidden>
+    <div style="font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;line-height:1.5;color:#e0e0e0;background:#14181d;min-height:100vh;padding:16px;box-sizing:border-box;">
+      <button type="button" data-nav="home"
+        style="background:#1e242b;color:#e0e0e0;border:1px solid #2c333a;border-radius:4px;font-weight:700;font-size:12px;padding:6px 12px;cursor:pointer;margin-bottom:12px;">
+        ← Back
+      </button>
+      <div style="font-size:18px;font-weight:700;color:#f8f8f2;margin-bottom:16px;">OpenAPI Debug Console</div>
+
+      <div style="background:#1e242b;border:1px solid #2c333a;border-radius:6px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:11px;color:#8b95a1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Authorization Token</div>
+        <input data-debug-token type="password" placeholder="Paste your open-api token"
+          style="width:100%;box-sizing:border-box;background:#14181d;border:1px solid #2c333a;border-radius:4px;padding:8px 10px;color:#a5f3a0;font-family:inherit;font-size:13px;outline:none;" />
+      </div>
+
+      <div style="background:#1e242b;border:1px solid #2c333a;border-radius:6px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:11px;color:#8b95a1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Request</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <span style="background:#7aa2f7;color:#14181d;font-weight:700;font-size:11px;padding:3px 8px;border-radius:3px;">GET</span>
+          <input data-debug-url value="https://backend.yituliu.cn/open-api/operator/info"
+            style="flex:1;background:#14181d;border:1px solid #2c333a;border-radius:4px;padding:6px 10px;color:#e0e0e0;font-family:inherit;font-size:12px;outline:none;" />
+        </div>
+        <button data-debug-send
+          style="background:#3fb950;color:#0a0c10;border:none;border-radius:4px;font-weight:700;font-size:13px;padding:8px 18px;cursor:pointer;">
+          Send Request
+        </button>
+      </div>
+
+      <div data-debug-response></div>
+    </div>
+  </section>
+</main>

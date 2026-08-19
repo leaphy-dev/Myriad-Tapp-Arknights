@@ -1,0 +1,58 @@
+{
+  "id": "ink.kei.arknights",
+  "name": "Arknights",
+  "version": "0.1.0",
+  "description": "明日方舟玩家个人信息展示",
+  "locales": {
+    "en-US": { "name": "Arknights", "description": "Arknights player profile viewer" }
+  },
+  "category": "data",
+  "main": "main.js",
+  "author": {
+    "name": "Leaphy"
+  },
+  "permissions": [
+    "storage:read",
+    "storage:write",
+    "network:fetch",
+    "ui:notification",
+    "ui:theme",
+    "ui:confirm"
+  ],
+  "hasPage": true,
+  "pageTemplate": "page.html",
+  "pageModules": ["assets.js", "app.js", "home.js", "debug.js"],
+  "styles": "styles.css",
+  "cssMode": "unified",
+  "assets": [
+    "assets/avatar.webp",
+    "assets/skills.jpg",
+    "assets/character_table.json",
+    "assets/avatar_map.json",
+    "assets/skill_map.json",
+    "assets/rank/elite0.png",
+    "assets/rank/elite1.png",
+    "assets/rank/elite2.png"
+  ],
+  "settings": [
+    {
+      "key": "apiToken",
+      "type": "input",
+      "label": "API Token",
+      "description": "ark.yituliu.cn 的 API Token，用于获取玩家数据",
+      "placeholder": "请输入 Token"
+    }
+  ],
+  "apis": {
+    "operatorData": {
+      "type": "http",
+      "access": "protected",
+      "endpoint": "https://backend.yituliu.cn/open-api/operator/info",
+      "method": "GET",
+      "description": "获取玩家干员练度数据",
+      "headers": {
+        "Authorization": "{{params.apiToken}}"
+      }
+    }
+  }
+}
