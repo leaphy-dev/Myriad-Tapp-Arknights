@@ -25,26 +25,27 @@
     }
   }
 
-  async function getApiToken() {
-    var token = '';
-    try {
-      var saved = await Tapp.settings.get('apiToken');
-      if (saved && typeof saved === 'string') {
-        token = saved;
-      }
-    } catch (e) {}
-    return token;
-  }
-
   async function refreshPlayerData() {
-    var token = await getApiToken();
-    if (!token) return;
-    var res = await Tapp.api('operatorData', { apiToken: token });
-    if (res && res.code === 200) {
+    var skland = window.__arkSkland;
+    if (!skland) return;
+    try {
+      var stored = await Tapp.storage.get(PLAYER_DATA_KEY);
+      var uid = stored && stored.data && stored.data.uid;
+      if (!uid) return;
+
+      var info = await skland.getPlayerInfo(uid);
+      var data = info && info.data ? info.data : null;
       await Tapp.storage.set(PLAYER_DATA_KEY, {
         ts: Date.now(),
-        data: res.data
+        data: {
+          uid: uid,
+          nickName: (stored.data && stored.data.nickName) || '',
+          channelName: (stored.data && stored.data.channelName) || '',
+          player: data
+        }
       });
+    } catch (e) {
+      console.error('Failed to refresh player data:', e);
     }
   }
 

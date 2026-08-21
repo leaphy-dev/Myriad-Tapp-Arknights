@@ -21,7 +21,7 @@
   ],
   "hasPage": true,
   "pageTemplate": "page.html",
-  "pageModules": ["assets.js", "app.js", "home.js", "debug.js"],
+  "pageModules": ["crypto.js", "skland.js", "assets.js", "app.js", "home.js", "debug.js"],
   "styles": "styles.css",
   "cssMode": "unified",
   "assets": [
@@ -36,22 +36,57 @@
   ],
   "settings": [
     {
-      "key": "apiToken",
+      "key": "sklandToken",
       "type": "input",
-      "label": "API Token",
-      "description": "ark.yituliu.cn 的 API Token，用于获取玩家数据",
-      "placeholder": "请输入 Token"
+      "label": "森空岛 Token",
+      "description": "格式：cred,token",
+      "placeholder": "cred,token"
     }
   ],
   "apis": {
-    "operatorData": {
+    "sklandPlayerBinding": {
       "type": "http",
       "access": "protected",
-      "endpoint": "https://backend.yituliu.cn/open-api/operator/info",
+      "endpoint": "https://zonai.skland.com/api/v1/game/player/binding",
       "method": "GET",
-      "description": "获取玩家干员练度数据",
+      "description": "森空岛玩家绑定账号列表",
       "headers": {
-        "Authorization": "{{params.apiToken}}"
+        "platform": "{{params.platform}}",
+        "timestamp": "{{params.timestamp}}",
+        "dId": "{{params.dId}}",
+        "vName": "{{params.vName}}",
+        "cred": "{{params.cred}}",
+        "sign": "{{params.sign}}"
+      }
+    },
+    "sklandPlayerInfo": {
+      "type": "http",
+      "access": "protected",
+      "endpoint": "https://zonai.skland.com/api/v1/game/player/info?uid={{params.uid}}",
+      "method": "GET",
+      "description": "森空岛玩家信息（含博士等级与干员）",
+      "headers": {
+        "platform": "{{params.platform}}",
+        "timestamp": "{{params.timestamp}}",
+        "dId": "{{params.dId}}",
+        "vName": "{{params.vName}}",
+        "cred": "{{params.cred}}",
+        "sign": "{{params.sign}}"
+      }
+    },
+    "sklandCultivate": {
+      "type": "http",
+      "access": "protected",
+      "endpoint": "https://zonai.skland.com/api/v1/game/cultivate/player?uid={{params.uid}}",
+      "method": "GET",
+      "description": "森空岛仓库材料与干员养成数据",
+      "headers": {
+        "platform": "{{params.platform}}",
+        "timestamp": "{{params.timestamp}}",
+        "dId": "{{params.dId}}",
+        "vName": "{{params.vName}}",
+        "cred": "{{params.cred}}",
+        "sign": "{{params.sign}}"
       }
     }
   }

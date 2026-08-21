@@ -1,20 +1,33 @@
 // ========================================
-// Debug 页面模块
-// 依赖 assets.js 的 __arkAssets（loadAssets / buildOperatorCard）
+// Debug Page（API 测试）
 // ========================================
 
 (function () {
   function initDebug(container) {
     var tokenInput = container.querySelector('[data-debug-token]');
-    var urlInput = container.querySelector('[data-debug-url]');
+    var endpointSelect = container.querySelector('[data-debug-endpoint]');
+    var paramsBox = container.querySelector('[data-debug-params]');
+    var uidInput = container.querySelector('[data-debug-uid]');
     var sendBtn = container.querySelector('[data-debug-send]');
     var responsePanel = container.querySelector('[data-debug-response]');
 
     loadSavedToken(tokenInput);
 
+    function updateParams() {
+      var v = endpointSelect ? endpointSelect.value : '';
+      if (paramsBox) {
+        paramsBox.style.display = (v === 'binding') ? 'none' : 'flex';
+      }
+    }
+    updateParams();
+
+    if (endpointSelect) {
+      endpointSelect.addEventListener('change', updateParams);
+    }
+
     if (sendBtn) {
       sendBtn.addEventListener('click', function () {
-        runRequest(tokenInput, urlInput, responsePanel);
+        runRequest(tokenInput, endpointSelect, uidInput, responsePanel);
       });
     }
   }
@@ -22,11 +35,55 @@
   async function loadSavedToken(input) {
     if (!input) return;
     try {
-      var saved = await Tapp.settings.get('apiToken');
+      var saved = await Tapp.settings.get('sklandToken');
       if (saved && typeof saved === 'string') {
         input.value = saved;
       }
     } catch (e) {}
+  }
+
+  async function runRequest(tokenInput, endpointSelect, uidInput, panel) {
+    if (!panel) return;
+    panel.innerHTML = '';
+
+    var endpoint = endpointSelect ? endpointSelect.value : 'binding';
+    var uid = uidInput ? uidInput.value.trim() : '';
+    var credToken = tokenInput ? tokenInput.value.trim() : '';
+
+    var summary = document.createElement('div');
+    summary.setAttribute(
+      'style',
+      'background:#14181d;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
+    );
+    renderSummaryRow(summary, 'Request URL', 'https://zonai.skland.com' + endpointPath(endpoint));
+    renderSummaryRow(summary, 'Method', 'GET');
+    renderSummaryRow(summary, 'Auth', 'skland cred+sign');
+    panel.appendChild(summary);
+
+    try {
+      var skland = window.__arkSkland;
+      if (!skland) throw new Error('skland module not loaded');
+
+      var res;
+      if (endpoint === 'info') {
+        if (!uid) throw new Error('uid 必填');
+        res = await skland.getPlayerInfo(uid, credToken);
+      } else if (endpoint === 'cultivate') {
+        if (!uid) throw new Error('uid 必填');
+        res = await skland.getCultivate(uid, credToken);
+      } else {
+        res = await skland.getPlayerBinding(credToken);
+      }
+      renderResponse(panel, res);
+    } catch (e) {
+      renderResponse(panel, { code: -1, msg: String((e && e.message) || e), data: null });
+    }
+  }
+
+  function endpointPath(ep) {
+    if (ep === 'info') return '/api/v1/game/player/info';
+    if (ep === 'cultivate') return '/api/v1/game/cultivate/player';
+    return '/api/v1/game/player/binding';
   }
 
   function renderSummaryRow(panel, label, value) {
@@ -46,63 +103,6 @@
     panel.appendChild(row);
   }
 
-  async function runRequest(tokenInput, urlInput, panel) {
-    if (!panel) return;
-    panel.innerHTML = '';
-
-    var token = tokenInput ? tokenInput.value.trim() : '';
-    var url = urlInput ? urlInput.value : '';
-
-    var summary = document.createElement('div');
-    summary.setAttribute(
-      'style',
-      'background:#14181d;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
-    );
-    renderSummaryRow(summary, 'Request URL', url);
-    renderSummaryRow(summary, 'Method', 'GET');
-    renderSummaryRow(summary, 'Authorization', token ? token.slice(0, 8) + '…' : '(empty)');
-    panel.appendChild(summary);
-
-    try {
-      var res = await Tapp.api('operatorData', { apiToken: token });
-      renderOperators(panel, res);
-      renderResponse(panel, res);
-    } catch (e) {
-      renderResponse(panel, { code: -1, msg: String((e && e.message) || e), data: null });
-    }
-  }
-
-  async function renderOperators(panel, res) {
-    var list = res && Array.isArray(res.data) ? res.data : null;
-    if (!list || !list.length) return;
-
-    var assets = window.__arkAssets;
-    if (!assets) return;
-
-    var assetsReady = await assets.loadAssets();
-    if (!assetsReady) return;
-
-    var block = document.createElement('div');
-    block.setAttribute(
-      'style',
-      'background:#0d1117;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
-    );
-
-    var row = document.createElement('div');
-    row.setAttribute('style', 'display:flex;gap:12px;flex-wrap:wrap;');
-
-    // for (var i = 0; i < Math.min(3, list.length); i++) {
-    //   row.appendChild(assets.buildOperatorCard(list[i]));
-    // }
-
-    for (var i = 0; i < list.length; i++) {
-      row.appendChild(assets.buildOperatorCard(list[i]));
-    }
-
-    block.appendChild(row);
-    panel.appendChild(block);
-  }
-
   function renderResponse(panel, res) {
     var block = document.createElement('div');
     block.setAttribute(
@@ -110,8 +110,9 @@
       'background:#0d1117;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
     );
 
-    var code = (res && res.code) || '?';
-    var color = code === 200 ? '#3fb950' : code === -1 ? '#f85149' : '#d29922';
+    var hasCode = res && res.code !== undefined && res.code !== null;
+    var code = hasCode ? res.code : '?';
+    var color = code === 0 || code === 200 ? '#3fb950' : code === -1 ? '#f85149' : '#d29922';
     var codeLine = document.createElement('div');
     codeLine.setAttribute('style', 'font-size:12px;color:' + color + ';margin-bottom:6px;');
     codeLine.textContent = 'code: ' + code + (res && res.msg ? ' — ' + res.msg : '');

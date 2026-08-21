@@ -26,41 +26,24 @@ function applyI18n(root) {
 }
 
 // ========================================
-// Settings / 设置
-// ========================================
-
-async function getApiToken() {
-  var token = '';
-  try {
-    var saved = await Tapp.settings.get('apiToken');
-    if (saved && typeof saved === 'string') {
-      token = saved;
-    }
-  } catch (e) {}
-  return token;
-}
-
-// ========================================
 // Data / 数据
 // ========================================
 
-async function fetchOperatorData() {
-  var token = await getApiToken();
-  if (!token) {
-    throw new Error('apiToken not configured');
-  }
-  var res = await Tapp.api('operatorData', { apiToken: token });
-  if (res && res.code === 200) {
-    return res.data;
-  }
-  throw new Error((res && res.msg) || 'fetch operator data failed');
-}
-
 async function refreshPlayerData() {
-  var data = await fetchOperatorData();
+  var skland = window.__arkSkland;
+  if (!skland) throw new Error('skland module not loaded');
+
+  var result = await skland.getPlayerInfoAuto();
+  var data = result.info && result.info.data ? result.info.data : null;
+
   await Tapp.storage.set(PLAYER_DATA_KEY, {
     ts: Date.now(),
-    data: data
+    data: {
+      uid: result.uid,
+      nickName: result.nickName,
+      channelName: result.channelName,
+      player: data
+    }
   });
   return data;
 }
