@@ -2,6 +2,13 @@
   color-scheme: light dark;
   --ark-gold: #d4b483;
   --ark-gold-dim: rgba(212, 180, 131, 0.35);
+
+  /* 响应式尺寸：clamp 随视口流畅缩放，媒体查询做断点覆盖 */
+  --char-card-w: clamp(84px, 9vw, 120px);   /* 干员卡片宽 */
+  --char-card-h: calc(var(--char-card-w) * 2); /* 干员卡片高（1:2） */
+  --assist-avatar: clamp(84px, 9vw, 100px); /* 助战头像 */
+  --player-avatar: clamp(56px, 6vw, 64px);  /* 玩家头像 */
+  --left-col-w: clamp(300px, 32vw, 460px);  /* 宽屏左列宽 */
 }
 
 html,
@@ -73,4 +80,136 @@ body {
   .ark-title {
     color: var(--ark-gold);
   }
+}
+
+/* ========================================
+   Loading spinner / 加载圈
+   ======================================== */
+
+@keyframes ark-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ark-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--ark-gold);
+  border-radius: 50%;
+  animation: ark-spin 0.8s linear infinite;
+  box-sizing: border-box;
+}
+
+.ark-spinner-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 60px;
+}
+
+/* ========================================
+   Display 布局（宽屏两列 / 窄屏单列）
+   ======================================== */
+
+.ark-display-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ark-display-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ark-display-right {
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .ark-display-layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .ark-display-left {
+    flex: 0 0 var(--left-col-w);
+    width: var(--left-col-w);
+    max-width: var(--left-col-w);
+  }
+
+  .ark-display-right {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ark-game-data {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+  }
+}
+
+/* ========================================
+   滚动条：默认隐藏，滚动时才显示
+   ======================================== */
+
+.ark-game-data {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.ark-game-data::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ark-game-data::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ark-game-data::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.ark-game-data.scrolling {
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+.ark-game-data.scrolling::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* 我的干员：水平滚动条（默认隐藏，滚动时才显示） */
+
+.ark-my-chars-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.ark-my-chars-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ark-my-chars-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ark-my-chars-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.ark-my-chars-scroll.scrolling {
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+.ark-my-chars-scroll.scrolling::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.35);
 }

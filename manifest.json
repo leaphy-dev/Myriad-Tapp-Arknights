@@ -7,7 +7,14 @@
     "en-US": { "name": "Arknights", "description": "Arknights player profile viewer" }
   },
   "category": "data",
-  "main": "main.js",
+  "core": {
+    "entry": "core.js",
+    "styles": "styles.css"
+  },
+  "page": {
+    "entry": "page/index.js",
+    "template": "page.html"
+  },
   "author": {
     "name": "Leaphy"
   },
@@ -19,20 +26,24 @@
     "ui:theme",
     "ui:confirm"
   ],
-  "hasPage": true,
-  "pageTemplate": "page.html",
-  "pageModules": ["crypto.js", "skland.js", "assets.js", "app.js", "home.js", "debug.js"],
-  "styles": "styles.css",
-  "cssMode": "unified",
   "assets": [
-    "assets/avatar.webp",
-    "assets/skills.jpg",
-    "assets/character_table.json",
-    "assets/avatar_map.json",
-    "assets/skill_map.json",
     "assets/rank/elite0.png",
     "assets/rank/elite1.png",
-    "assets/rank/elite2.png"
+    "assets/rank/elite2.png",
+    "assets/profession/pioneer.png",
+    "assets/profession/warrior.png",
+    "assets/profession/tank.png",
+    "assets/profession/sniper.png",
+    "assets/profession/caster.png",
+    "assets/profession/medic.png",
+    "assets/profession/support.png",
+    "assets/profession/special.png",
+    "assets/potential/potential_0.png",
+    "assets/potential/potential_1.png",
+    "assets/potential/potential_2.png",
+    "assets/potential/potential_3.png",
+    "assets/potential/potential_4.png",
+    "assets/potential/potential_5.png"
   ],
   "settings": [
     {
@@ -41,6 +52,14 @@
       "label": "森空岛 Token",
       "description": "格式：cred,token",
       "placeholder": "cred,token"
+    },
+    {
+      "key": "resourceBaseUrl",
+      "type": "input",
+      "label": "资源仓库地址",
+      "description": "明日方舟素材仓库基础地址，可指向自己的 fork",
+      "placeholder": "https://raw.githubusercontent.com/leaphy-dev/ArknightsGameResource/main",
+      "defaultValue": "https://raw.githubusercontent.com/leaphy-dev/ArknightsGameResource/main"
     }
   ],
   "apis": {

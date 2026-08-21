@@ -1,7 +1,7 @@
 /// <reference path="./types/tapp-sdk.d.ts" />
 
 // ========================================
-// Core / 核心
+// Core / 共享层（Widget、Page、Headless 三模式均加载）
 // ========================================
 
 var PLAYER_DATA_KEY = 'arknights.player';
@@ -25,27 +25,8 @@ function applyI18n(root) {
   }
 }
 
-// ========================================
-// Data / 数据
-// ========================================
-
-async function refreshPlayerData() {
-  var skland = window.__arkSkland;
-  if (!skland) throw new Error('skland module not loaded');
-
-  var result = await skland.getPlayerInfoAuto();
-  var data = result.info && result.info.data ? result.info.data : null;
-
-  await Tapp.storage.set(PLAYER_DATA_KEY, {
-    ts: Date.now(),
-    data: {
-      uid: result.uid,
-      nickName: result.nickName,
-      channelName: result.channelName,
-      player: data
-    }
-  });
-  return data;
-}
-
-// ========== Page Code ==========
+module.exports = {
+  PLAYER_DATA_KEY: PLAYER_DATA_KEY,
+  t: t,
+  applyI18n: applyI18n
+};

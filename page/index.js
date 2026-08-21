@@ -1,41 +1,34 @@
 // ========================================
-// App 页面模块（路由 + 生命周期 + 工具，自包含）
+// Page 入口（路由 + 生命周期 + 依赖加载）
 // ========================================
+
+var core = require('../core.js');
+
+// 加载页面模块（IIFE 模式，执行后挂载到全局）
+require('./crypto.js');
+require('./skland.js');
+require('./assets.js');
+require('./home.js');
+require('./debug.js');
 
 (function () {
   var currentTheme = 'light';
-  var PLAYER_DATA_KEY = 'arknights.player';
 
-  function t(key) {
-    try {
-      return Tapp.i18n.t(key);
-    } catch (e) {
-      return key;
-    }
-  }
+  // ========================================
+  // 静默刷新（从 storage 读 UID 后拉新数据）
+  // ========================================
 
-  function applyI18n(root) {
-    var nodes = root.querySelectorAll('[data-i18n]');
-    for (var i = 0; i < nodes.length; i++) {
-      nodes[i].textContent = t(nodes[i].getAttribute('data-i18n'));
-    }
-    var placeholders = root.querySelectorAll('[data-i18n-placeholder]');
-    for (var j = 0; j < placeholders.length; j++) {
-      placeholders[j].setAttribute('placeholder', t(placeholders[j].getAttribute('data-i18n-placeholder')));
-    }
-  }
-
-  async function refreshPlayerData() {
+  async function silentRefresh() {
     var skland = window.__arkSkland;
     if (!skland) return;
     try {
-      var stored = await Tapp.storage.get(PLAYER_DATA_KEY);
+      var stored = await Tapp.storage.get(core.PLAYER_DATA_KEY);
       var uid = stored && stored.data && stored.data.uid;
       if (!uid) return;
 
       var info = await skland.getPlayerInfo(uid);
       var data = info && info.data ? info.data : null;
-      await Tapp.storage.set(PLAYER_DATA_KEY, {
+      await Tapp.storage.set(core.PLAYER_DATA_KEY, {
         ts: Date.now(),
         data: {
           uid: uid,
@@ -91,7 +84,7 @@
     var container = document.getElementById('tapp-content');
 
     if (container) {
-      applyI18n(container);
+      core.applyI18n(container);
       container.addEventListener('click', function (e) {
         var trigger = e.target && (e.target.closest ? e.target.closest('[data-nav]') : closestByAttr(e.target, '[data-nav]'));
         if (trigger) {
@@ -114,8 +107,14 @@
       });
     } catch (e) {}
 
-    refreshPlayerData().catch(function (e) {
+    silentRefresh().catch(function (e) {
       console.error('Failed to refresh player data:', e);
     });
+
+    // 后台预热 assets（不阻塞 UI），后续渲染时直接复用已加载结果
+    var arkAssets = window.__arkAssets;
+    if (arkAssets && typeof arkAssets.loadAssets === 'function') {
+      arkAssets.loadAssets().catch(function () {});
+    }
   });
 })();

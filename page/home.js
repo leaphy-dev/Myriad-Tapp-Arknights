@@ -257,31 +257,42 @@
 
     if (status && status.avatar && status.avatar.url) {
       var avatarBox = document.createElement('div');
-      avatarBox.setAttribute('style', 'position:relative;width:64px;height:64px;flex-shrink:0;');
+      avatarBox.setAttribute('style', 'position:relative;width:var(--player-avatar);height:var(--player-avatar);flex-shrink:0;');
 
       var avatarImg = document.createElement('img');
       avatarImg.referrerPolicy = 'no-referrer';
-      avatarImg.src = status.avatar.url;
       avatarImg.setAttribute(
         'style',
-        'width:64px;height:64px;border:2px solid #fff;box-sizing:border-box;background:#000;display:block;'
+        'width:var(--player-avatar);height:var(--player-avatar);border:2px solid #fff;box-sizing:border-box;background:#000;' +
+          'display:block;opacity:0;transition:opacity 0.25s ease;'
       );
+      avatarImg.onload = function () {
+        avatarImg.style.opacity = '1';
+        var s = avatarBox.querySelector('.ark-spinner');
+        if (s && s.parentNode) s.parentNode.remove();
+      };
+      avatarImg.onerror = function () {
+        var s = avatarBox.querySelector('.ark-spinner');
+        if (s && s.parentNode) s.parentNode.remove();
+      };
       avatarBox.appendChild(avatarImg);
+      avatarBox.appendChild(makeSpinner(16));
 
       if (status.level !== undefined) {
         var lvCircle = document.createElement('div');
         lvCircle.setAttribute(
           'style',
-          'position:absolute;top:0;right:0;width:28px;height:28px;' +
+          'position:absolute;top:0;right:0;width:calc(var(--player-avatar) * 0.4375);height:calc(var(--player-avatar) * 0.4375);' +
             'border:1px solid #ffd700;border-radius:50%;transform:translate(50%,-50%);' +
             'background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;' +
-            'font-size:12px;font-weight:600;color:#fff;'
+            'font-size:calc(var(--player-avatar) * 0.1875);font-weight:600;color:#fff;'
         );
         lvCircle.textContent = String(status.level);
         avatarBox.appendChild(lvCircle);
       }
 
       nameRow.appendChild(avatarBox);
+      avatarImg.src = status.avatar.url;
     }
 
     var nameBox = document.createElement('div');
@@ -318,20 +329,70 @@
     var assist = player.assistChars;
     var assets = window.__arkAssets;
 
-    if (assets) {
-      await assets.loadAssets();
+    if (!assets) return;
 
-      var infoCard = assets.buildPlayerInfoCard(player);
-      content.appendChild(infoCard);
+    var infoCard = assets.buildPlayerInfoCard(player);
+    var gameDataCard = assets.buildGameDataCard(player);
 
-      content.appendChild(assets.buildAssistUnit(assist, 100));
+    var layout = document.createElement('div');
+    layout.setAttribute('class', 'ark-display-layout');
 
-      content.appendChild(assets.buildGameDataCard(player));
+    var leftCol = document.createElement('div');
+    leftCol.setAttribute('class', 'ark-display-left');
+    leftCol.appendChild(infoCard);
 
-    }
+    var rightCol = document.createElement('div');
+    rightCol.setAttribute('class', 'ark-display-right');
+    rightCol.appendChild(gameDataCard);
+
+    var assistPlaceholder = makeSpinnerBox();
+    leftCol.appendChild(assistPlaceholder);
+
+    var myCharsPlaceholder = makeSpinnerBox();
+    leftCol.appendChild(myCharsPlaceholder);
+
+    layout.appendChild(leftCol);
+    layout.appendChild(rightCol);
+    content.appendChild(layout);
+
+    assets.loadAssets().then(function () {
+      assets.setCharInfoMap(player.charInfoMap);
+      assistPlaceholder.replaceWith(assets.buildAssistUnit(assist));
+      myCharsPlaceholder.replaceWith(assets.buildMyChars(player.chars, player.charInfoMap));
+    }).catch(function () {
+      var fail = document.createElement('div');
+      fail.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);padding:16px;text-align:center;');
+      fail.textContent = '资源加载失败';
+      assistPlaceholder.replaceWith(fail);
+      myCharsPlaceholder.replaceWith(fail.cloneNode(true));
+    });
   }
 
   // ==================== 共用 ====================
+
+  function makeSpinner(size) {
+    var holder = document.createElement('div');
+    holder.setAttribute(
+      'style',
+      'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
+    );
+    var spinner = document.createElement('div');
+    spinner.setAttribute('class', 'ark-spinner');
+    if (size) {
+      spinner.setAttribute('style', 'width:' + size + 'px;height:' + size + 'px;');
+    }
+    holder.appendChild(spinner);
+    return holder;
+  }
+
+  function makeSpinnerBox() {
+    var holder = document.createElement('div');
+    holder.setAttribute('class', 'ark-spinner-box');
+    var spinner = document.createElement('div');
+    spinner.setAttribute('class', 'ark-spinner');
+    holder.appendChild(spinner);
+    return holder;
+  }
 
   function formatRegisterTs(ts) {
     var d = new Date(Number(ts) * 1000);
