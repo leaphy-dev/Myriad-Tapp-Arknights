@@ -7,10 +7,14 @@
   var _eliteUrls = {};
   var _professionUrls = {};
   var _potentialUrls = {};
+  var _starUrls = {};
+  var _rarityBgUrls = {};
   var _loadPromise = null;
   var _repoBase = 'https://raw.githubusercontent.com/leaphy-dev/ArknightsGameResource/main';
 
   var PROFESSIONS = ['pioneer', 'warrior', 'tank', 'sniper', 'caster', 'medic', 'support', 'special'];
+  var RARITY_CLASSES = ['one-star', 'two-star', 'three-star', 'four-star', 'five-star', 'six-star'];
+  var RARITY_BG_KEYS = ['2-0', 'r3', 'r4', 'r5'];
 
   function decodeBase64(b64) {
     if (typeof Buffer !== 'undefined') {
@@ -48,6 +52,12 @@
         for (var p = 0; p < 6; p++) {
           jobs.push(Tapp.assets.getUrl('assets/potential/potential_' + p + '.png'));
         }
+        for (var s = 0; s < 6; s++) {
+          jobs.push(Tapp.assets.getUrl('assets/star/star_' + s + '.png'));
+        }
+        for (var b = 0; b < RARITY_BG_KEYS.length; b++) {
+          jobs.push(Tapp.assets.getUrl('assets/star/charBg_' + RARITY_BG_KEYS[b] + '.png'));
+        }
 
         var results = await Promise.all(jobs);
         _eliteUrls[0] = results[0].url;
@@ -60,6 +70,14 @@
         idx += PROFESSIONS.length;
         for (var k = 0; k < 6; k++) {
           _potentialUrls[k] = results[idx + k].url;
+        }
+        idx += 6;
+        for (var r = 0; r < 6; r++) {
+          _starUrls[r] = results[idx + r].url;
+        }
+        idx += 6;
+        for (var m = 0; m < RARITY_BG_KEYS.length; m++) {
+          _rarityBgUrls[RARITY_BG_KEYS[m]] = results[idx + m].url;
         }
         return true;
       } catch (e) {
@@ -83,6 +101,28 @@
     // TODO: 根据潜能识别皮肤，以后解析skin字段
     var suffix = evolvePhase === 2 ? '_2' : '_1';
     return _repoBase + '/portrait/' + charId + suffix + '.png';
+  }
+
+  function skinUrl(skinId) {
+    // 皮肤半身像：portrait/{charId}_{brandId}#{sortId}.png（无 "b" 后缀）
+    // 只有带 "@"（品牌皮肤）才有对应半身像；默认皮肤（无 @）回落到 portrait
+    if (!skinId || skinId.indexOf('@') === -1) return '';
+    return _repoBase + '/portrait/' + skinId.replace(/@/g, '_').replace(/#/g, '%23') + '.png';
+  }
+
+  function skinAvatarUrl(skinId) {
+    // 皮肤头像（头部区域）：avatar/{charId}_{brandId}#{sortId}.png（无 "b" 后缀）
+    if (!skinId || skinId.indexOf('@') === -1) return '';
+    return _repoBase + '/avatar/' + skinId.replace(/@/g, '_').replace(/#/g, '%23') + '.png';
+  }
+
+  function rarityBgUrl(rarity) {
+    var key;
+    if (rarity >= 5) key = 'r5';
+    else if (rarity >= 4) key = 'r4';
+    else if (rarity >= 3) key = 'r3';
+    else key = '2-0';
+    return _rarityBgUrls[key] || '';
   }
 
   function setCharInfoMap(map) {
@@ -164,7 +204,7 @@
     lvBlock.appendChild(lvNum);
     wrap.appendChild(lvBlock);
 
-    img.src = avatarUrl(op.id);
+    img.src = skinAvatarUrl(op.skinId) || avatarUrl(op.id);
 
     return wrap;
   }
@@ -203,18 +243,19 @@
     }
 
     var row = document.createElement('div');
-    row.setAttribute('style', 'display:flex;gap:12px;flex-wrap:wrap;justify-content:center;');
+    row.setAttribute('style', 'display:flex;gap:12px;flex-wrap:nowrap;justify-content:center;');
 
     for (var i = 0; i < list.length; i++) {
       var op = {
         id: list[i].charId,
         level: list[i].level,
         evolvePhase: list[i].evolvePhase,
-        skillId: list[i].skillId
+        skillId: list[i].skillId,
+        skinId: list[i].skinId
       };
 
       var unit = document.createElement('div');
-      unit.setAttribute('style', 'display:flex;flex-direction:column;align-items:center;gap:3px;');
+      unit.setAttribute('style', 'display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0;');
 
       var avatar = buildOperatorAvatar(op);
       unit.appendChild(avatar);
@@ -237,18 +278,29 @@
 
   function buildMyChars(chars, charInfoMap) {
     var list = Array.isArray(chars) ? chars.slice() : [];
-    list.sort(function (a, b) { return (b.level || 0) - (a.level || 0); });
+    list.sort(function (a, b) {
+      var infoA = charInfoMap && charInfoMap[a.charId];
+      var infoB = charInfoMap && charInfoMap[b.charId];
+      var ra = infoA ? (infoA.rarity || 0) : 0;
+      var rb = infoB ? (infoB.rarity || 0) : 0;
+      if (ra !== rb) return rb - ra;
+      if ((b.evolvePhase || 0) !== (a.evolvePhase || 0)) return (b.evolvePhase || 0) - (a.evolvePhase || 0);
+      return (b.level || 0) - (a.level || 0);
+    });
     list = list.slice(0, 10);
 
     var wrap = document.createElement('div');
     wrap.setAttribute(
       'style',
       'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
-        'width:100%;box-sizing:border-box;min-width:0;'
+        'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
     );
 
     var header = document.createElement('div');
-    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;');
+    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;');
+
+    var left = document.createElement('div');
+    left.setAttribute('style', 'display:flex;align-items:baseline;gap:8px;');
 
     var zh = document.createElement('span');
     zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
@@ -258,8 +310,21 @@
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
     en.textContent = '// MY OPERATORS';
 
-    header.appendChild(zh);
-    header.appendChild(en);
+    left.appendChild(zh);
+    left.appendChild(en);
+    header.appendChild(left);
+
+    var arrow = document.createElement('button');
+    arrow.type = 'button';
+    arrow.setAttribute('data-nav', 'assets');
+    arrow.textContent = '→';
+    arrow.setAttribute(
+      'style',
+      'font-size:14px;font-weight:600;color:#f5f5f5;background:transparent;border:none;' +
+        'cursor:pointer;padding:0 4px;line-height:1;'
+    );
+    header.appendChild(arrow);
+
     wrap.appendChild(header);
 
     if (!list.length) {
@@ -274,7 +339,8 @@
     grid.setAttribute('class', 'ark-my-chars-scroll');
     grid.setAttribute(
       'style',
-      'display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;'
+      'display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding-bottom:6px;' +
+        'max-width:100%;'
     );
     grid.addEventListener('scroll', function () {
       grid.classList.add('scrolling');
@@ -292,7 +358,13 @@
 
     for (var i = 0; i < list.length; i++) {
       var info = charInfoMap && charInfoMap[list[i].charId];
-      grid.appendChild(buildCharCard(list[i], info));
+      var card = buildCharCard(list[i], info);
+      grid.appendChild(card);
+      (function (c, delay) {
+        setTimeout(function () {
+          c.style.opacity = '1';
+        }, delay);
+      })(card, i * 60);
     }
 
     wrap.appendChild(grid);
@@ -300,21 +372,31 @@
   }
 
   function buildCharCard(char, info) {
-    var card = document.createElement('div');
-    card.setAttribute(
-      'style',
-      'position:relative;width:var(--char-card-w);height:var(--char-card-h);overflow:hidden;' +
-        'background:#222;flex-shrink:0;'
-    );
+    var rarity = info && info.rarity != null ? info.rarity : 0;
 
-    var bg = document.createElement('img');
-    bg.referrerPolicy = 'no-referrer';
-    bg.alt = '';
-    bg.setAttribute(
-      'style',
-      'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;' +
-        'opacity:0;transition:opacity 0.3s ease;'
-    );
+    var card = document.createElement('div');
+    card.className = 'operator-handbook-item-wrapper';
+    card.setAttribute('style', 'opacity:0;transition:opacity 0.4s ease, transform 0.2s ease, box-shadow 0.2s ease;');
+
+    var bgBox = document.createElement('div');
+    bgBox.className = 'operator-handbook-item-component operator-handbook-item-bg';
+    var bgImg = document.createElement('img');
+    bgImg.alt = '';
+    bgImg.referrerPolicy = 'no-referrer';
+    var bgUrl = rarityBgUrl(rarity);
+    if (bgUrl) {
+      bgImg.src = bgUrl;
+      bgBox.appendChild(bgImg);
+    }
+    card.appendChild(bgBox);
+
+    var illus = document.createElement('div');
+    illus.className = 'operator-handbook-item-component operator-handbook-item-illustration';
+
+    var illusImg = document.createElement('img');
+    illusImg.referrerPolicy = 'no-referrer';
+    illusImg.alt = '';
+    illusImg.setAttribute('style', 'opacity:0;transition:opacity 0.3s ease;');
 
     var spinner = document.createElement('div');
     spinner.setAttribute(
@@ -326,71 +408,86 @@
     spinnerEl.setAttribute('style', 'width:calc(var(--char-card-w) * 0.16);height:calc(var(--char-card-w) * 0.16);');
     spinner.appendChild(spinnerEl);
 
-    bg.onload = function () {
-      bg.style.opacity = '1';
+    illusImg.onload = function () {
+      illusImg.style.opacity = '1';
       spinner.remove();
     };
-    bg.onerror = function () {
+    illusImg.onerror = function () {
       spinner.remove();
     };
 
-    card.appendChild(bg);
-    card.appendChild(spinner);
+    illus.appendChild(illusImg);
+    illus.appendChild(spinner);
+    card.appendChild(illus);
 
+    var decorWrap = document.createElement('div');
+    decorWrap.className = 'operator-handbook-item-component operator-handbook-item-decor-main-wrap ' + RARITY_CLASSES[rarity];
+    var decor = document.createElement('div');
+    decor.className = 'operator-handbook-item-decor-main';
+    for (var pi = 1; pi <= 3; pi++) {
+      var part = document.createElement('div');
+      part.className = 'operator-handbook-item-decor-part operator-handbook-item-decor-part-' + pi;
+      decor.appendChild(part);
+    }
+    decorWrap.appendChild(decor);
+    card.appendChild(decorWrap);
+
+    var topLeft = document.createElement('div');
+    topLeft.className = 'operator-handbook-item-component operator-handbook-item-decor-topleft';
+    card.appendChild(topLeft);
+
+    var nameEl = document.createElement('div');
+    nameEl.className = 'operator-handbook-item-component operator-handbook-item-name';
+    nameEl.textContent = operatorName(char.charId);
+    card.appendChild(nameEl);
+
+    var career = document.createElement('div');
+    career.className = 'operator-handbook-item-component operator-handbook-item-career';
     var profKey = info && info.profession ? info.profession.toLowerCase() : '';
     var profUrl = _professionUrls[profKey];
     if (profUrl) {
       var profImg = document.createElement('img');
       profImg.src = profUrl;
-      profImg.setAttribute(
-        'style',
-        'position:absolute;top:calc(var(--char-card-w) * 0.06);left:calc(var(--char-card-w) * 0.06);' +
-          'width:calc(var(--char-card-w) * 0.2);height:calc(var(--char-card-w) * 0.2);pointer-events:none;'
-      );
-      card.appendChild(profImg);
+      profImg.alt = '';
+      career.appendChild(profImg);
     }
+    card.appendChild(career);
 
-    var leftBottom = document.createElement('div');
-    leftBottom.setAttribute(
-      'style',
-      'position:absolute;left:calc(var(--char-card-w) * 0.06);bottom:calc(var(--char-card-w) * 0.2);' +
-        'display:flex;flex-direction:column;align-items:center;gap:calc(var(--char-card-w) * 0.02);'
-    );
+    var star = document.createElement('div');
+    star.className = 'operator-handbook-item-component operator-handbook-item-star';
+    var starUrl = _starUrls[rarity];
+    if (starUrl) {
+      var starImg = document.createElement('img');
+      starImg.src = starUrl;
+      starImg.alt = '';
+      star.appendChild(starImg);
+    }
+    card.appendChild(star);
 
     var rankUrl = _eliteUrls[char.evolvePhase || 0];
     if (rankUrl) {
+      var eliteBox = document.createElement('div');
+      eliteBox.className = 'operator-handbook-item-component operator-handbook-item-elite';
       var rankImg = document.createElement('img');
       rankImg.src = rankUrl;
-      rankImg.setAttribute('style', 'width:calc(var(--char-card-w) * 0.14);height:calc(var(--char-card-w) * 0.14);pointer-events:none;');
-      leftBottom.appendChild(rankImg);
+      rankImg.alt = '';
+      eliteBox.appendChild(rankImg);
+      card.appendChild(eliteBox);
     }
 
-    var lvCircle = document.createElement('div');
-    lvCircle.setAttribute(
-      'style',
-      'width:calc(var(--char-card-w) * 0.2);height:calc(var(--char-card-w) * 0.2);' +
-        'border:1px solid #ffd700;border-radius:50%;' +
-        'background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;' +
-        'font-size:calc(var(--char-card-w) * 0.09);font-weight:600;color:#fff;'
-    );
-    lvCircle.textContent = String(char.level || 0);
-    leftBottom.appendChild(lvCircle);
-
-    card.appendChild(leftBottom);
-
-    var rightBottom = document.createElement('div');
-    rightBottom.setAttribute(
-      'style',
-      'position:absolute;right:calc(var(--char-card-w) * 0.06);bottom:calc(var(--char-card-w) * 0.2);' +
-        'display:flex;flex-direction:column;align-items:center;gap:calc(var(--char-card-w) * 0.02);'
-    );
+    var labelContainer = document.createElement('div');
+    labelContainer.className = 'operator-handbook-item-component operator-handbook-item-label-container';
 
     var potentialUrl = _potentialUrls[char.potentialRank || 0];
     if (potentialUrl) {
       var potImg = document.createElement('img');
       potImg.src = potentialUrl;
-      potImg.setAttribute('style', 'width:calc(var(--char-card-w) * 0.12);height:calc(var(--char-card-w) * 0.12);pointer-events:none;');
-      rightBottom.appendChild(potImg);
+      potImg.alt = '';
+      potImg.setAttribute(
+        'style',
+        'width:calc(var(--char-card-w) * 0.21);height:calc(var(--char-card-w) * 0.21);pointer-events:none;'
+      );
+      labelContainer.appendChild(potImg);
     }
 
     if (char.defaultSkillId) {
@@ -400,29 +497,38 @@
       skillImg.onerror = function () {
         skillImg.remove();
       };
-      skillImg.setAttribute('style', 'width:calc(var(--char-card-w) * 0.18);height:calc(var(--char-card-w) * 0.18);pointer-events:none;object-fit:contain;');
+      skillImg.setAttribute(
+        'style',
+        'width:calc(var(--char-card-w) * 0.32);height:calc(var(--char-card-w) * 0.32);pointer-events:none;object-fit:contain;' +
+          'border:1px solid rgba(255,255,255,0.85);background:rgba(0,0,0,0.4);'
+      );
       skillImg.src = skillUrl(char.defaultSkillId);
-      rightBottom.appendChild(skillImg);
+      labelContainer.appendChild(skillImg);
     }
 
-    card.appendChild(rightBottom);
+    card.appendChild(labelContainer);
 
-    var nameBar = document.createElement('div');
-    nameBar.setAttribute(
-      'style',
-      'position:absolute;left:0;right:0;bottom:0;' +
-        'padding:calc(var(--char-card-w) * 0.04) calc(var(--char-card-w) * 0.03);background:rgba(0,0,0,0.55);'
-    );
-    var name = document.createElement('span');
-    name.setAttribute(
-      'style',
-      'font-size:calc(var(--char-card-w) * 0.09);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;text-align:center;'
-    );
-    name.textContent = operatorName(char.charId);
-    nameBar.appendChild(name);
-    card.appendChild(nameBar);
+    if (char.level != null) {
+      var lvCircle = document.createElement('div');
+      lvCircle.className = 'operator-handbook-item-component operator-handbook-item-level';
+      lvCircle.textContent = String(char.level);
+      card.appendChild(lvCircle);
+    }
 
-    bg.src = portraitUrl(char.charId, char.evolvePhase || 0);
+    var illusSrc = skinUrl(char.skinId) || portraitUrl(char.charId, char.evolvePhase || 0);
+    if (typeof IntersectionObserver !== 'undefined') {
+      var io = new IntersectionObserver(function (entries) {
+        for (var ei = 0; ei < entries.length; ei++) {
+          if (entries[ei].isIntersecting) {
+            illusImg.src = illusSrc;
+            io.disconnect();
+          }
+        }
+      }, { rootMargin: '120px' });
+      io.observe(card);
+    } else {
+      illusImg.src = illusSrc;
+    }
 
     return card;
   }
@@ -764,8 +870,11 @@
     buildOperatorAvatar: buildOperatorAvatar,
     buildAssistUnit: buildAssistUnit,
     buildMyChars: buildMyChars,
+    buildCharCard: buildCharCard,
     buildPlayerInfoCard: buildPlayerInfoCard,
     buildGameDataCard: buildGameDataCard,
-    operatorName: operatorName
+    operatorName: operatorName,
+    charInfoMap: function () { return _charInfoMap; },
+    skinUrl: skinUrl
   };
 })();

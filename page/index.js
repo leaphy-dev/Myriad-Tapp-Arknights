@@ -9,6 +9,7 @@ require('./crypto.js');
 require('./skland.js');
 require('./assets.js');
 require('./home.js');
+require('./collection.js');
 require('./debug.js');
 
 (function () {
@@ -46,7 +47,7 @@ require('./debug.js');
   // View Router / 视图路由
   // ========================================
 
-  var VIEW_NAMES = ['home', 'debug'];
+  var VIEW_NAMES = ['home', 'debug', 'assets'];
   var DEFAULT_VIEW = 'home';
 
   function navigate(name) {

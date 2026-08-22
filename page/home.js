@@ -15,7 +15,7 @@
     homeSection.innerHTML = '';
 
     var wrap = document.createElement('div');
-    wrap.setAttribute('style', 'max-width:720px;margin:0 auto;padding:24px 16px;font-family:system-ui,sans-serif;');
+    wrap.setAttribute('style', 'width:100%;max-width:720px;margin:0 auto;padding:24px 16px;font-family:system-ui,sans-serif;box-sizing:border-box;');
 
     var title = document.createElement('h1');
     title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0 0 4px;color:#f5f5f5;');
@@ -77,7 +77,7 @@
     step.setAttribute('data-page', 'step1');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;'
+      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;display:none;'
     );
 
     var label = document.createElement('div');
@@ -148,7 +148,7 @@
     step.setAttribute('data-page', 'step2');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;'
+      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;display:none;'
     );
 
     var label = document.createElement('div');
@@ -283,7 +283,7 @@
         lvCircle.setAttribute(
           'style',
           'position:absolute;top:0;right:0;width:calc(var(--player-avatar) * 0.4375);height:calc(var(--player-avatar) * 0.4375);' +
-            'border:1px solid #ffd700;border-radius:50%;transform:translate(50%,-50%);' +
+            'border:2px solid #ffd700;border-radius:50%;transform:translate(50%,-50%);' +
             'background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;' +
             'font-size:calc(var(--player-avatar) * 0.1875);font-weight:600;color:#fff;'
         );
