@@ -89,8 +89,10 @@
     return _loadPromise;
   }
 
-  function avatarUrl(charId) {
-    return _repoBase + '/avatar/' + charId + '.png';
+  function avatarUrl(charId, evolvePhase) {
+    // 头像（头部区域）：avatar/{charId}.png（默认/精英0-1）、avatar/{charId}_2.png（精英2）
+    var suffix = (evolvePhase || 0) >= 2 ? '_2' : '';
+    return _repoBase + '/avatar/' + charId + suffix + '.png';
   }
 
   function skillUrl(skillId) {
@@ -111,7 +113,9 @@
   }
 
   function skinAvatarUrl(skinId) {
-    // 皮肤头像（头部区域）：avatar/{charId}_{brandId}#{sortId}.png（无 "b" 后缀）
+    // 皮肤头像（头部区域）：avatar/{charId}_{brandId}#{sortId}.png
+    // skinId 形如 "char_102_texas@winter#1" -> 文件名 "char_102_texas_winter#1.png"（无 "b" 后缀）
+    // 只有带 "@"（品牌皮肤）才有独立头像；默认皮肤（无 @）回落到 avatarUrl
     if (!skinId || skinId.indexOf('@') === -1) return '';
     return _repoBase + '/avatar/' + skinId.replace(/@/g, '_').replace(/#/g, '%23') + '.png';
   }
@@ -204,7 +208,7 @@
     lvBlock.appendChild(lvNum);
     wrap.appendChild(lvBlock);
 
-    img.src = skinAvatarUrl(op.skinId) || avatarUrl(op.id);
+    img.src = skinAvatarUrl(op.skinId) || avatarUrl(op.id, op.evolvePhase);
 
     return wrap;
   }
@@ -213,9 +217,15 @@
     var list = Array.isArray(assistList) ? assistList.slice(0, 3) : [];
 
     var wrap = document.createElement('div');
+    // wrap.setAttribute(
+    //   'style',
+    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+    //     'width:100%;box-sizing:border-box;min-width:0;'
+    // );
+
     wrap.setAttribute(
       'style',
-      'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+      'padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
         'width:100%;box-sizing:border-box;min-width:0;'
     );
 
@@ -290,9 +300,15 @@
     list = list.slice(0, 10);
 
     var wrap = document.createElement('div');
+    // wrap.setAttribute(
+    //   'style',
+    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+    //     'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
+    // );
+
     wrap.setAttribute(
       'style',
-      'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+      'padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
         'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
     );
 
@@ -316,7 +332,7 @@
 
     var arrow = document.createElement('button');
     arrow.type = 'button';
-    arrow.setAttribute('data-nav', 'assets');
+    arrow.setAttribute('data-nav', 'collection');
     arrow.textContent = '→';
     arrow.setAttribute(
       'style',
@@ -554,11 +570,17 @@
     var furnitureTotal = player && player.building && player.building.furniture && player.building.furniture.total;
 
     var wrap = document.createElement('div');
+    // wrap.setAttribute(
+    //   'style',
+    //   'display:flex;gap:8px;margin-top:12px;padding:12px;background:#313131;' +
+    //     'border:1px solid rgba(128,128,128,0.2);width:100%;box-sizing:border-box;min-width:0;'
+    // );
+
     wrap.setAttribute(
       'style',
-      'display:flex;gap:8px;margin-top:12px;padding:12px;background:#313131;' +
+      'display:flex;gap:8px;padding:12px;background:#313131;' +
         'border:1px solid rgba(128,128,128,0.2);width:100%;box-sizing:border-box;min-width:0;'
-    );
+    );    
 
     var rows = [
       ['作战进度', status && status.mainStageProgress ? status.mainStageProgress : '-'],
@@ -602,30 +624,20 @@
   function buildGameDataCard(player) {
     var wrap = document.createElement('div');
     wrap.setAttribute('class', 'ark-game-data');
+    // wrap.setAttribute(
+    //   'style',
+    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128,128,128,0);' +
+    //     'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
+    // );
+
     wrap.setAttribute(
       'style',
-      'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128,128,128,0);' +
-        'width:100%;box-sizing:border-box;min-width:0;'
+      'padding:12px;background:#313131;border:1px solid rgba(128,128,128,0);' +
+        'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
     );
 
-    wrap.addEventListener('scroll', function () {
-      wrap.classList.add('scrolling');
-      if (wrap._scrollTimer) clearTimeout(wrap._scrollTimer);
-      wrap._scrollTimer = setTimeout(function () {
-        wrap.classList.remove('scrolling');
-      }, 400);
-    });
-    wrap.addEventListener('wheel', function (e) {
-      var down = wrap.scrollTop + wrap.clientHeight < wrap.scrollHeight;
-      var up = wrap.scrollTop > 0;
-      if ((e.deltaY > 0 && down) || (e.deltaY < 0 && up)) {
-        wrap.scrollTop += e.deltaY;
-        e.preventDefault();
-      }
-    }, { passive: false });
-
     var header = document.createElement('div');
-    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;');
+    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-shrink:0;');
 
     var zh = document.createElement('span');
     zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
@@ -647,16 +659,61 @@
     ];
 
     var tabBar = document.createElement('div');
+    tabBar.setAttribute('class', 'ark-game-tabbar');
     tabBar.setAttribute(
       'style',
-      'display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;'
+      'display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px;flex-shrink:0;scrollbar-width:none;'
     );
+
+    var body = document.createElement('div');
+    body.setAttribute('style', 'position:relative;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;');
 
     var contentBox = document.createElement('div');
     contentBox.setAttribute('data-game-content', '1');
-    contentBox.setAttribute('style', 'min-width:0;overflow:hidden;');
+    contentBox.setAttribute('style', 'flex:1;min-height:0;overflow-y:auto;min-width:0;');
+
+    contentBox.addEventListener('scroll', function () {
+      contentBox.classList.add('scrolling');
+      if (contentBox._scrollTimer) clearTimeout(contentBox._scrollTimer);
+      contentBox._scrollTimer = setTimeout(function () {
+        contentBox.classList.remove('scrolling');
+      }, 400);
+
+      if (fadeTop) fadeTop.style.opacity = contentBox.scrollTop > 0 ? '1' : '0';
+      if (fadeBottom) {
+        var atBottom = contentBox.scrollTop + contentBox.clientHeight >= contentBox.scrollHeight - 1;
+        fadeBottom.style.opacity = atBottom ? '0' : '1';
+      }
+    });
+    contentBox.addEventListener('wheel', function (e) {
+      var down = contentBox.scrollTop + contentBox.clientHeight < contentBox.scrollHeight;
+      var up = contentBox.scrollTop > 0;
+      if ((e.deltaY > 0 && down) || (e.deltaY < 0 && up)) {
+        contentBox.scrollTop += e.deltaY;
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    var fadeTop = document.createElement('div');
+    fadeTop.setAttribute(
+      'style',
+      'position:absolute;top:0;left:0;right:0;height:36px;pointer-events:none;z-index:5;' +
+        'background:linear-gradient(to bottom, #313131, rgba(49,49,49,0));transition:opacity 0.2s ease;'
+    );
+
+    var fadeBottom = document.createElement('div');
+    fadeBottom.setAttribute(
+      'style',
+      'position:absolute;bottom:0;left:0;right:0;height:36px;pointer-events:none;z-index:5;' +
+        'background:linear-gradient(to top, #313131, rgba(49,49,49,0));transition:opacity 0.2s ease;'
+    );
+
+    body.appendChild(contentBox);
+    body.appendChild(fadeTop);
+    body.appendChild(fadeBottom);
+
     wrap.appendChild(tabBar);
-    wrap.appendChild(contentBox);
+    wrap.appendChild(body);
 
     for (var i = 0; i < tabs.length; i++) {
       (function (key, label) {
@@ -665,8 +722,8 @@
         tab.textContent = label;
         tab.setAttribute(
           'style',
-          'flex-shrink:0;padding:5px 12px;font-size:11px;color:#e0e0e0;background:rgba(255,255,255,0.06);' +
-            'border:1px solid rgba(255,255,255,0.12);border-radius:6px;cursor:pointer;'
+          'flex-shrink:0;padding:0 16px;height:32px;line-height:32px;font-size:12px;color:#e0e0e0;' +
+            'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:0;cursor:pointer;'
         );
         tab.addEventListener('click', function () {
           contentBox.innerHTML = '';
@@ -762,6 +819,7 @@
 
     if (picUrl) {
       var img = new Image();
+      img.referrerPolicy = 'no-referrer';
       img.onload = function () {
         bg.style.backgroundImage = 'url("' + picUrl + '")';
         bg.style.opacity = '1';
@@ -875,6 +933,7 @@
     buildGameDataCard: buildGameDataCard,
     operatorName: operatorName,
     charInfoMap: function () { return _charInfoMap; },
+    professionUrl: function (key) { return _professionUrls[key] || ''; },
     skinUrl: skinUrl
   };
 })();

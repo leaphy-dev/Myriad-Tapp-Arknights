@@ -32,12 +32,17 @@ body {
   display: none !important;
 }
 
-.home-view {
+.home-view,
+.collection-view {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #232323;
+  background: #0a0a0a;
 }
 
 .ark-home-inner {
@@ -63,6 +68,22 @@ body {
 
 .ark-debug-btn:hover {
   opacity: 1;
+}
+
+.ark-refresh-btn {
+  transition: border-color 0.2s ease;
+}
+
+.ark-refresh-btn:hover {
+  border-color: var(--ark-gold);
+}
+
+.ark-refresh-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.ark-refresh-btn:hover svg {
+  transform: rotate(90deg);
 }
 
 .ark-title {
@@ -136,23 +157,25 @@ body {
 @media (min-width: 900px) {
   .ark-display-layout {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .ark-display-left {
-    flex: 0 0 var(--left-col-w);
-    width: var(--left-col-w);
-    max-width: var(--left-col-w);
+    flex: 0 0 50%;
+    width: 50%;
+    max-width: 50%;
   }
 
   .ark-display-right {
-    flex: 1;
+    flex: 0 0 50%;
+    width: 50%;
+    max-width: 50%;
     min-width: 0;
   }
 
   .ark-game-data {
     max-height: calc(100vh - 140px);
-    overflow-y: auto;
+    overflow: hidden;
   }
 }
 
@@ -160,31 +183,37 @@ body {
    滚动条：默认隐藏，滚动时才显示
    ======================================== */
 
-.ark-game-data {
+[data-game-content] {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
-.ark-game-data::-webkit-scrollbar {
+[data-game-content]::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.ark-game-data::-webkit-scrollbar-track {
+[data-game-content]::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.ark-game-data::-webkit-scrollbar-thumb {
+[data-game-content]::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 3px;
 }
 
-.ark-game-data.scrolling {
+[data-game-content].scrolling {
   scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
 }
 
-.ark-game-data.scrolling::-webkit-scrollbar-thumb {
+[data-game-content].scrolling::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.35);
+}
+
+.ark-game-tabbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* 我的干员：水平滚动条（默认隐藏，滚动时才显示） */
@@ -377,7 +406,7 @@ body {
   left: calc(var(--char-card-w) * 0.05);
   width: calc(var(--char-card-w) * 0.36);
   height: calc(var(--char-card-w) * 0.36);
-  border: 2px solid #ffd700;
+  border: 2px solid #ffe601;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.7);
   display: flex;

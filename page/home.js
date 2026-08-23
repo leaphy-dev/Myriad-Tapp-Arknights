@@ -14,21 +14,46 @@
     if (!homeSection) return;
     homeSection.innerHTML = '';
 
-    var wrap = document.createElement('div');
-    wrap.setAttribute('style', 'width:100%;max-width:720px;margin:0 auto;padding:24px 16px;font-family:system-ui,sans-serif;box-sizing:border-box;');
+    var wrap = homeSection;
+
+    var navRow = document.createElement('div');
+    navRow.setAttribute('class', 'ark-page-nav');
+    navRow.setAttribute('style', 'display:flex;align-items:center;justify-content:space-between;');
 
     var title = document.createElement('h1');
-    title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0 0 4px;color:#f5f5f5;');
+    title.setAttribute('class', 'ark-page-title');
+    title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0;color:#f5f5f5;');
     title.textContent = '明日方舟';
-    wrap.appendChild(title);
+    navRow.appendChild(title);
+
+    var refreshBtn = document.createElement('button');
+    refreshBtn.type = 'button';
+    refreshBtn.setAttribute('class', 'ark-refresh-btn');
+    refreshBtn.setAttribute('title', '刷新数据');
+    refreshBtn.setAttribute(
+      'style',
+      'width:36px;height:36px;display:flex;align-items:center;justify-content:center;' +
+        'border:1px solid rgba(255,255,255,0.3);border-radius:50%;background:transparent;' +
+        'color:#f5f5f5;cursor:pointer;flex-shrink:0;padding:0;'
+    );
+    refreshBtn.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<polyline points="23 4 23 10 17 10"></polyline>' +
+        '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' +
+      '</svg>';
+    refreshBtn.addEventListener('click', function () {
+      showPage(wrap, 'step1');
+    });
+    navRow.appendChild(refreshBtn);
+
+    wrap.appendChild(navRow);
 
     buildStep1(wrap);
     buildStep2(wrap);
     buildDisplay(wrap);
 
-    homeSection.appendChild(wrap);
-
     var footer = document.createElement('div');
+    footer.setAttribute('class', 'ark-page-footer');
     footer.setAttribute('style', 'text-align:center;margin-top:24px;font-size:12px;color:rgba(255,255,255,0.5);');
     var debugLink = document.createElement('button');
     debugLink.type = 'button';
@@ -36,8 +61,8 @@
     debugLink.setAttribute('data-nav', 'debug');
     debugLink.setAttribute(
       'style',
-      'padding:4px 12px;font-size:12px;color:rgba(255,255,255,0.5);background:transparent;' +
-        'border:1px solid rgba(255,255,255,0.3);border-radius:999px;cursor:pointer;'
+      'padding:2px 8px;font-size:10px;color:rgba(255,255,255,0.5);background:transparent;' +
+        'border:none;cursor:pointer;'
     );
     footer.appendChild(debugLink);
     homeSection.appendChild(footer);
@@ -66,7 +91,7 @@
       display: wrap.querySelector('[data-page="display"]')
     };
     for (var key in pages) {
-      if (pages[key]) pages[key].style.display = key === name ? 'block' : 'none';
+      if (pages[key]) pages[key].style.display = key === name ? (key === 'display' ? 'flex' : 'block') : 'none';
     }
   }
 
@@ -223,23 +248,6 @@
     content.setAttribute('style', 'flex:1;');
     page.appendChild(content);
 
-    var navRow = document.createElement('div');
-    navRow.setAttribute('style', 'display:flex;justify-content:flex-end;gap:8px;margin-top:32px;');
-
-    var refreshBtn = document.createElement('button');
-    refreshBtn.type = 'button';
-    refreshBtn.textContent = '刷新数据';
-    refreshBtn.setAttribute(
-      'style',
-      'padding:8px 18px;font-size:13px;font-weight:500;color:#fff;background:#6366f1;' +
-        'border:none;border-radius:6px;cursor:pointer;'
-    );
-    refreshBtn.addEventListener('click', function () {
-      showPage(wrap, 'step1');
-    });
-    navRow.appendChild(refreshBtn);
-    page.appendChild(navRow);
-
     wrap.appendChild(page);
   }
 
@@ -253,6 +261,7 @@
     var status = player.status;
 
     var nameRow = document.createElement('div');
+    nameRow.setAttribute('class', 'ark-player-header');
     nameRow.setAttribute('style', 'display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;');
 
     if (status && status.avatar && status.avatar.url) {
@@ -350,6 +359,13 @@
 
     var myCharsPlaceholder = makeSpinnerBox();
     leftCol.appendChild(myCharsPlaceholder);
+
+    var spacer = document.createElement('div');
+    spacer.setAttribute(
+      'style',
+      'flex:1;min-height:0;background:#313131;border:1px solid rgba(128,128,128,0);box-sizing:border-box;'
+    );
+    leftCol.appendChild(spacer);
 
     layout.appendChild(leftCol);
     layout.appendChild(rightCol);

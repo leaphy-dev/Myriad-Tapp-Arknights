@@ -47,7 +47,7 @@ require('./debug.js');
   // View Router / 视图路由
   // ========================================
 
-  var VIEW_NAMES = ['home', 'debug', 'assets'];
+  var VIEW_NAMES = ['home', 'debug', 'collection'];
   var DEFAULT_VIEW = 'home';
 
   function navigate(name) {
