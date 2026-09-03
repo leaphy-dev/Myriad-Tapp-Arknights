@@ -3,6 +3,7 @@
 // ========================================
 
 (function () {
+  var core = require('../core.js');
   var PLAYER_DATA_KEY = 'arknights.player';
   var state = {
     credToken: '',
@@ -23,13 +24,13 @@
     var title = document.createElement('h1');
     title.setAttribute('class', 'ark-page-title');
     title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0;color:#f5f5f5;');
-    title.textContent = '明日方舟';
+    title.textContent = core.t('title');
     navRow.appendChild(title);
 
     var refreshBtn = document.createElement('button');
     refreshBtn.type = 'button';
     refreshBtn.setAttribute('class', 'ark-refresh-btn');
-    refreshBtn.setAttribute('title', '刷新数据');
+    refreshBtn.setAttribute('title', core.t('home.refresh'));
     refreshBtn.setAttribute(
       'style',
       'width:36px;height:36px;display:flex;align-items:center;justify-content:center;' +
@@ -107,23 +108,60 @@
 
     var label = document.createElement('div');
     label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:#f5f5f5;');
-    label.textContent = '步骤 1 · 获取森空岛 Token';
+    label.textContent = core.t('home.step1.title');
     step.appendChild(label);
 
     var guide = document.createElement('div');
     guide.setAttribute('style', 'font-size:12px;line-height:1.7;color:rgba(255,255,255,0.5);margin-bottom:12px;');
-    guide.textContent =
-      '在森空岛官网（skland.com）已登录的控制台执行以下命令，把结果复制到下方输入框（格式：cred,token）';
+    guide.textContent = core.t('home.step1.guide');
     step.appendChild(guide);
 
     var code = document.createElement('div');
+    code.setAttribute('title', core.t('home.step1.copyHint'));
     code.setAttribute(
       'style',
       'font-family:monospace;font-size:11px;background:rgba(255,255,255,0.08);padding:8px 10px;border-radius:6px;' +
-        'word-break:break-all;margin-bottom:12px;color:#f5f5f5;'
+        'word-break:break-all;margin-bottom:12px;color:#f5f5f5;cursor:pointer;' +
+        'transition:background 0.2s ease;user-select:none;'
     );
-    code.textContent =
+    var CODE_CMD =
       "copy(localStorage.getItem('SK_OAUTH_CRED_KEY')+','+localStorage.getItem('SK_TOKEN_CACHE_KEY'))";
+    code.textContent = CODE_CMD;
+
+    function legacyCopy(text) {
+      var ok = false;
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('style', 'position:fixed;left:-9999px;top:0;opacity:0;');
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand('copy');
+        ta.remove();
+      } catch (e) {}
+      return ok;
+    }
+
+    var copyTimer = null;
+    code.addEventListener('click', function () {
+      var showCopied = function () {
+        if (copyTimer) clearTimeout(copyTimer);
+        code.textContent = core.t('home.step1.copied');
+        code.style.background = 'rgba(63, 185, 80, 0.25)';
+        copyTimer = setTimeout(function () {
+          code.textContent = CODE_CMD;
+          code.style.background = 'rgba(255,255,255,0.08)';
+        }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(CODE_CMD).then(showCopied, function () {
+          if (legacyCopy(CODE_CMD)) showCopied();
+        });
+      } else if (legacyCopy(CODE_CMD)) {
+        showCopied();
+      }
+    });
+
     step.appendChild(code);
 
     var input = document.createElement('input');
@@ -141,7 +179,7 @@
 
     var nextBtn = document.createElement('button');
     nextBtn.type = 'button';
-    nextBtn.textContent = '下一步';
+    nextBtn.textContent = core.t('common.next');
     nextBtn.setAttribute(
       'style',
       'padding:8px 18px;font-size:13px;font-weight:500;color:#fff;background:#6366f1;' +
@@ -155,7 +193,7 @@
     nextBtn.addEventListener('click', function () {
       var credToken = input.value.trim();
       if (credToken.indexOf(',') === -1) {
-        showError(step, '请输入格式为 cred,token 的值');
+        showError(step, core.t('home.step1.errorFormat'));
         return;
       }
       clearError(step);
@@ -178,7 +216,7 @@
 
     var label = document.createElement('div');
     label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:#f5f5f5;');
-    label.textContent = '步骤 2 · 选择账号';
+    label.textContent = core.t('home.step2.title');
     step.appendChild(label);
 
     var listBox = document.createElement('div');
@@ -190,7 +228,7 @@
 
     var prevBtn = document.createElement('button');
     prevBtn.type = 'button';
-    prevBtn.textContent = '上一步';
+    prevBtn.textContent = core.t('common.prev');
     prevBtn.setAttribute(
       'style',
       'padding:8px 18px;font-size:13px;font-weight:500;color:#f5f5f5;background:transparent;' +
@@ -211,7 +249,7 @@
     listBox.innerHTML = '';
 
     if (!state.binds.length) {
-      listBox.textContent = '无可用账号';
+      listBox.textContent = core.t('home.step2.empty');
       return;
     }
 
@@ -219,7 +257,7 @@
       (function (b) {
         var btn = document.createElement('button');
         btn.type = 'button';
-        var name = b.nickName || '未知';
+        var name = b.nickName || core.t('common.unknown');
         var channel = b.channelName || '';
         btn.textContent = name + '（' + channel + '） UID:' + b.uid;
         btn.setAttribute(
@@ -318,7 +356,7 @@
 
       var enrollLabel = document.createElement('span');
       enrollLabel.setAttribute('style', 'font-size:11px;color:#000;background:#22bbff;padding:0 4px;');
-      enrollLabel.textContent = '入职日';
+      enrollLabel.textContent = core.t('home.enroll');
 
       var enrollDate = document.createElement('span');
       enrollDate.setAttribute(
@@ -378,7 +416,7 @@
     }).catch(function () {
       var fail = document.createElement('div');
       fail.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);padding:16px;text-align:center;');
-      fail.textContent = '资源加载失败';
+      fail.textContent = core.t('home.loadFail');
       assistPlaceholder.replaceWith(fail);
       myCharsPlaceholder.replaceWith(fail.cloneNode(true));
     });
@@ -444,7 +482,7 @@
   async function runBinding(wrap, step) {
     var skland = window.__arkSkland;
     if (!skland) {
-      showError(step, 'skland 模块未加载');
+      showError(step, core.t('home.errorModule'));
       return;
     }
 
@@ -461,7 +499,7 @@
 
       var binds = ak && Array.isArray(ak.bindingList) ? ak.bindingList : [];
       if (!binds.length) {
-        showError(step, '未找到明日方舟绑定账号，请检查 Token 是否有效');
+        showError(step, core.t('home.errorNoBinding'));
         return;
       }
 

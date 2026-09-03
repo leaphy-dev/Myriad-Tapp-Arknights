@@ -66,10 +66,10 @@
 
       var res;
       if (endpoint === 'info') {
-        if (!uid) throw new Error('uid 必填');
+        if (!uid) throw new Error('uid required');
         res = await skland.getPlayerInfo(uid, credToken);
       } else if (endpoint === 'cultivate') {
-        if (!uid) throw new Error('uid 必填');
+        if (!uid) throw new Error('uid required');
         res = await skland.getCultivate(uid, credToken);
       } else {
         res = await skland.getPlayerBinding(credToken);

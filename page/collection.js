@@ -3,20 +3,21 @@
 // ========================================
 
 (function () {
+  var core = require('../core.js');
   var PLAYER_DATA_KEY = 'arknights.player';
 
   var PROFESSIONS = ['pioneer', 'warrior', 'tank', 'sniper', 'caster', 'medic', 'support', 'special'];
   var RARITY_OPTIONS = [
-    { key: '6', label: '6星', min: 5 },
-    { key: '5', label: '5星', min: 4 },
-    { key: '4', label: '4星', min: 3 },
-    { key: '1-3', label: '1-3星', min: 0 }
+    { key: '6', labelKey: 'collection.rarity6', min: 5 },
+    { key: '5', labelKey: 'collection.rarity5', min: 4 },
+    { key: '4', labelKey: 'collection.rarity4', min: 3 },
+    { key: '1-3', labelKey: 'collection.rarity13', min: 0 }
   ];
   var SORT_OPTIONS = [
-    { key: 'level', label: '角色等级' },
-    { key: 'skill', label: '技能专精' },
-    { key: 'gain', label: '获取时间' },
-    { key: 'name', label: '角色名称' }
+    { key: 'level', labelKey: 'collection.sortLevel' },
+    { key: 'skill', labelKey: 'collection.sortSkill' },
+    { key: 'gain', labelKey: 'collection.sortGain' },
+    { key: 'name', labelKey: 'collection.sortName' }
   ];
 
   function rarityCategory(rarity) {
@@ -46,7 +47,7 @@
 
     var back = document.createElement('button');
     back.type = 'button';
-    back.textContent = '← 返回';
+    back.textContent = core.t('common.back');
     back.setAttribute('data-nav', 'home');
     back.setAttribute(
       'style',
@@ -56,7 +57,7 @@
 
     var title = document.createElement('h1');
     title.setAttribute('style', 'font-size:18px;font-weight:600;margin:0;color:#f5f5f5;');
-    title.textContent = '我的方舟';
+    title.textContent = core.t('collection.title');
 
     topBar.appendChild(back);
     topBar.appendChild(title);
@@ -86,8 +87,8 @@
     var tabBar = document.createElement('div');
     tabBar.setAttribute('style', 'position:relative;display:flex;justify-content:center;gap:64px;margin-bottom:20px;');
 
-    var tabChar = makeTabText('干员');
-    var tabSkin = makeTabText('时装');
+    var tabChar = makeTabText(core.t('collection.tabOperators'));
+    var tabSkin = makeTabText(core.t('collection.tabSkins'));
     tabBar.appendChild(tabChar);
     tabBar.appendChild(tabSkin);
 
@@ -155,7 +156,7 @@
 
     var toggle = document.createElement('div');
     toggle.setAttribute('style', 'cursor:pointer;color:#fff;font-size:14px;padding:6px 0;user-select:none;text-align:center;');
-    toggle.textContent = '筛选 ▾';
+    toggle.textContent = core.t('collection.filter') + ' ▾';
     container.appendChild(toggle);
 
     var panel = document.createElement('div');
@@ -173,7 +174,7 @@
       return t;
     }
 
-    panel.appendChild(sectionTitle('职业'));
+    panel.appendChild(sectionTitle(core.t('collection.profession')));
     var profRow = document.createElement('div');
     profRow.setAttribute('style', 'display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;justify-content:center;');
     for (var p = 0; p < PROFESSIONS.length; p++) {
@@ -194,13 +195,13 @@
     }
     panel.appendChild(profRow);
 
-    panel.appendChild(sectionTitle('稀有度'));
+    panel.appendChild(sectionTitle(core.t('collection.rarity')));
     var rarityRow = document.createElement('div');
     rarityRow.setAttribute('style', 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;justify-content:center;');
     for (var r = 0; r < RARITY_OPTIONS.length; r++) {
       (function (opt) {
         var chip = document.createElement('div');
-        chip.textContent = opt.label;
+        chip.textContent = core.t(opt.labelKey);
         chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,0.35);user-select:none;opacity:0.5;');
         chip.addEventListener('click', function () {
           var i = filterState.rarities.indexOf(opt.key);
@@ -214,14 +215,14 @@
     }
     panel.appendChild(rarityRow);
 
-    panel.appendChild(sectionTitle('类型'));
+    panel.appendChild(sectionTitle(core.t('collection.sort')));
     var sortRow = document.createElement('div');
     sortRow.setAttribute('style', 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;');
     var sortChips = [];
     for (var s = 0; s < SORT_OPTIONS.length; s++) {
       (function (opt) {
         var chip = document.createElement('div');
-        chip.textContent = opt.label;
+        chip.textContent = core.t(opt.labelKey);
         chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,0.35);user-select:none;opacity:0.5;');
         chip.addEventListener('click', function () {
           filterState.sortBy = (filterState.sortBy === opt.key) ? 'rarity' : opt.key;
@@ -253,7 +254,7 @@
         panel.style.transform = 'translateY(-8px)';
         panel.style.visibility = 'hidden';
       }
-      toggle.textContent = isOpen ? '筛选 ▴' : '筛选 ▾';
+      toggle.textContent = isOpen ? (core.t('collection.filter') + ' ▴') : (core.t('collection.filter') + ' ▾');
     });
 
     return container;
@@ -284,7 +285,7 @@
 
     if (!list.length) {
       panel.setAttribute('style', 'font-size:12px;color:rgba(255,255,255,0.5);');
-      panel.textContent = '暂无干员数据';
+      panel.textContent = core.t('collection.empty');
       return panel;
     }
 
@@ -338,7 +339,7 @@
       'padding:32px;text-align:center;font-size:13px;color:rgba(255,255,255,0.5);' +
         'border:1px dashed rgba(255,255,255,0.2);border-radius:8px;'
     );
-    panel.textContent = '时装资产 · TODO（' + Object.keys(skinInfoMap || {}).length + ' 个皮肤）';
+    panel.textContent = core.t('collection.skinTodoPrefix') + Object.keys(skinInfoMap || {}).length + core.t('collection.skinTodoSuffix');
     return panel;
   }
 

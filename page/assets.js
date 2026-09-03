@@ -3,6 +3,7 @@
 // ========================================
 
 (function () {
+  var core = require('../core.js');
   var _charInfoMap = null;
   var _eliteUrls = {};
   var _professionUrls = {};
@@ -234,7 +235,7 @@
 
     var zh = document.createElement('span');
     zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
-    zh.textContent = '助战干员';
+    zh.textContent = core.t('assets.supportUnits');
 
     var en = document.createElement('span');
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
@@ -247,7 +248,7 @@
     if (!list.length) {
       var empty = document.createElement('div');
       empty.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);');
-      empty.textContent = '暂无助战';
+      empty.textContent = core.t('assets.noSupport');
       wrap.appendChild(empty);
       return wrap;
     }
@@ -320,7 +321,7 @@
 
     var zh = document.createElement('span');
     zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
-    zh.textContent = '我的干员';
+    zh.textContent = core.t('assets.myOperators');
 
     var en = document.createElement('span');
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
@@ -346,7 +347,7 @@
     if (!list.length) {
       var empty = document.createElement('div');
       empty.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);');
-      empty.textContent = '暂无干员';
+      empty.textContent = core.t('assets.noOperators');
       wrap.appendChild(empty);
       return wrap;
     }
@@ -583,11 +584,11 @@
     );    
 
     var rows = [
-      ['作战进度', status && status.mainStageProgress ? status.mainStageProgress : '-'],
-      ['干员', charCount != null ? String(charCount) : (status && status.charCnt !== undefined ? String(status.charCnt) : '-')],
-      ['时装', status && status.skinCnt !== undefined ? String(status.skinCnt) : '-'],
-      ['家具', furnitureTotal !== undefined ? String(furnitureTotal) : '-'],
-      ['蚀刻章', medalCount(medal)]
+      [core.t('assets.progress'), status && status.mainStageProgress ? status.mainStageProgress : '-'],
+      [core.t('assets.operators'), charCount != null ? String(charCount) : (status && status.charCnt !== undefined ? String(status.charCnt) : '-')],
+      [core.t('assets.skins'), status && status.skinCnt !== undefined ? String(status.skinCnt) : '-'],
+      [core.t('assets.furniture'), furnitureTotal !== undefined ? String(furnitureTotal) : '-'],
+      [core.t('assets.medals'), medalCount(medal)]
     ];
 
     for (var i = 0; i < rows.length; i++) {
@@ -641,7 +642,7 @@
 
     var zh = document.createElement('span');
     zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
-    zh.textContent = '游戏数据';
+    zh.textContent = core.t('assets.gameData');
 
     var en = document.createElement('span');
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
@@ -652,10 +653,10 @@
     wrap.appendChild(header);
 
     var tabs = [
-      ['sidestory', '活动剧情'],
-      ['rogue', '集成战略'],
-      ['campaign', '剿灭'],
-      ['tower', '保全派驻']
+      ['sidestory', core.t('assets.tabSidestory')],
+      ['rogue', core.t('assets.tabRogue')],
+      ['campaign', core.t('assets.tabCampaign')],
+      ['tower', core.t('assets.tabTower')]
     ];
 
     var tabBar = document.createElement('div');
@@ -839,14 +840,14 @@
   function renderActivity(contentBox, player) {
     var list = player && Array.isArray(player.activity) ? player.activity : [];
     if (!list.length) {
-      contentBox.textContent = '暂无活动';
+      contentBox.textContent = core.t('assets.noActivity');
       return;
     }
     var shown = 0;
     for (var i = 0; i < list.length; i++) {
       var act = list[i];
       var info = player.activityInfoMap && player.activityInfoMap[act.actId];
-      var name = info && info.name ? info.name : (act.actId || '活动');
+      var name = info && info.name ? info.name : (act.actId || core.t('assets.fallbackActivity'));
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
 
@@ -861,65 +862,65 @@
       contentBox.appendChild(buildModeSubCard(picUrl, name, lines));
       shown++;
     }
-    if (!shown) contentBox.textContent = '暂无活动';
+    if (!shown) contentBox.textContent = core.t('assets.noActivity');
   }
 
   function renderRogue(contentBox, player) {
     var records = player && player.rogue && Array.isArray(player.rogue.records) ? player.rogue.records : [];
     if (!records.length) {
-      contentBox.textContent = '暂无集成战略';
+      contentBox.textContent = core.t('assets.noRogue');
       return;
     }
     var shown = 0;
     for (var i = 0; i < records.length; i++) {
       var r = records[i];
       var info = player.rogueInfoMap && player.rogueInfoMap[r.rogueId];
-      var name = info && info.name ? info.name : (r.rogueId || '主题');
+      var name = info && info.name ? info.name : (r.rogueId || core.t('assets.fallbackRogue'));
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
       var lines = [
-        '通关 ' + (r.clearTime || 0),
-        '等级 ' + (r.bpLevel || 0),
-        r.medal ? ('徽章 ' + (r.medal.current || 0) + '/' + (r.medal.total || 0)) : ''
+        core.t('assets.clearTimes') + ' ' + (r.clearTime || 0),
+        core.t('assets.level') + ' ' + (r.bpLevel || 0),
+        r.medal ? (core.t('assets.medal') + ' ' + (r.medal.current || 0) + '/' + (r.medal.total || 0)) : ''
       ];
       contentBox.appendChild(buildModeSubCard(picUrl, name, lines));
       shown++;
     }
-    if (!shown) contentBox.textContent = '暂无集成战略';
+    if (!shown) contentBox.textContent = core.t('assets.noRogue');
   }
 
   function renderCampaign(contentBox, player) {
     var records = player && player.campaign && Array.isArray(player.campaign.records) ? player.campaign.records : [];
-    if (!records.length) { contentBox.textContent = '暂无剿灭'; return; }
+    if (!records.length) { contentBox.textContent = core.t('assets.noCampaign'); return; }
     var shown = 0;
     for (var i = 0; i < records.length; i++) {
       var r = records[i];
       var info = player.campaignInfoMap && player.campaignInfoMap[r.campaignId];
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
-      var name = info && info.name ? info.name : (r.campaignId || '剿灭');
-      var lines = ['最大杀敌 ' + (r.maxKills || 0)];
+      var name = info && info.name ? info.name : (r.campaignId || core.t('assets.fallbackCampaign'));
+      var lines = [core.t('assets.maxKills') + ' ' + (r.maxKills || 0)];
       contentBox.appendChild(buildModeSubCard(picUrl, name, lines));
       shown++;
     }
-    if (!shown) contentBox.textContent = '暂无剿灭';
+    if (!shown) contentBox.textContent = core.t('assets.noCampaign');
   }
 
   function renderTower(contentBox, player) {
     var records = player && player.tower && Array.isArray(player.tower.records) ? player.tower.records : [];
-    if (!records.length) { contentBox.textContent = '暂无保全派驻'; return; }
+    if (!records.length) { contentBox.textContent = core.t('assets.noTower'); return; }
     var shown = 0;
     for (var i = 0; i < records.length; i++) {
       var r = records[i];
       var info = player.towerInfoMap && player.towerInfoMap[r.towerId];
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
-      var name = info && info.name ? info.name : (r.towerId || ('层' + (i + 1)));
-      var lines = ['最高 ' + (r.best || 0)];
+      var name = info && info.name ? info.name : (r.towerId || (core.t('assets.fallbackTower') + (i + 1)));
+      var lines = [core.t('assets.best') + ' ' + (r.best || 0)];
       contentBox.appendChild(buildModeSubCard(picUrl, name, lines));
       shown++;
     }
-    if (!shown) contentBox.textContent = '暂无保全派驻';
+    if (!shown) contentBox.textContent = core.t('assets.noTower');
   }
 
   window.__arkAssets = {
