@@ -23,13 +23,13 @@ require('./debug.js');
     var skland = window.__arkSkland;
     if (!skland) return;
     try {
-      var stored = await Tapp.storage.get(core.PLAYER_DATA_KEY);
+      var stored = await Tapp.shared.get(core.PLAYER_DATA_KEY);
       var uid = stored && stored.data && stored.data.uid;
       if (!uid) return;
 
       var info = await skland.getPlayerInfo(uid);
       var data = info && info.data ? info.data : null;
-      await Tapp.storage.set(core.PLAYER_DATA_KEY, {
+      await Tapp.shared.set(core.PLAYER_DATA_KEY, {
         ts: Date.now(),
         data: {
           uid: uid,

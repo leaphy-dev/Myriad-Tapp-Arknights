@@ -23,7 +23,7 @@
 
     var title = document.createElement('h1');
     title.setAttribute('class', 'ark-page-title');
-    title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0;color:#f5f5f5;');
+    title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0;color:var(--ark-text);');
     title.textContent = core.t('title');
     navRow.appendChild(title);
 
@@ -34,8 +34,8 @@
     refreshBtn.setAttribute(
       'style',
       'width:36px;height:36px;display:flex;align-items:center;justify-content:center;' +
-        'border:1px solid rgba(255,255,255,0.3);border-radius:50%;background:transparent;' +
-        'color:#f5f5f5;cursor:pointer;flex-shrink:0;padding:0;'
+        'border:1px solid var(--ark-border-strong);border-radius:50%;background:transparent;' +
+        'color:var(--ark-text);cursor:pointer;flex-shrink:0;padding:0;'
     );
     refreshBtn.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -55,14 +55,14 @@
 
     var footer = document.createElement('div');
     footer.setAttribute('class', 'ark-page-footer');
-    footer.setAttribute('style', 'text-align:center;margin-top:24px;font-size:12px;color:rgba(255,255,255,0.5);');
+    footer.setAttribute('style', 'text-align:center;margin-top:24px;font-size:12px;color:var(--ark-text-dim);');
     var debugLink = document.createElement('button');
     debugLink.type = 'button';
     debugLink.textContent = 'Debug';
     debugLink.setAttribute('data-nav', 'debug');
     debugLink.setAttribute(
       'style',
-      'padding:2px 8px;font-size:10px;color:rgba(255,255,255,0.5);background:transparent;' +
+      'padding:2px 8px;font-size:10px;color:var(--ark-text-dim);background:transparent;' +
         'border:none;cursor:pointer;'
     );
     footer.appendChild(debugLink);
@@ -74,7 +74,7 @@
   async function initView(wrap) {
     var stored = null;
     try {
-      stored = await Tapp.storage.get(PLAYER_DATA_KEY);
+      stored = await Tapp.shared.get(PLAYER_DATA_KEY);
     } catch (e) {}
 
     if (stored && stored.data && stored.data.player) {
@@ -103,16 +103,16 @@
     step.setAttribute('data-page', 'step1');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;display:none;'
+      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:10px;display:none;'
     );
 
     var label = document.createElement('div');
-    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:#f5f5f5;');
+    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:var(--ark-text);');
     label.textContent = core.t('home.step1.title');
     step.appendChild(label);
 
     var guide = document.createElement('div');
-    guide.setAttribute('style', 'font-size:12px;line-height:1.7;color:rgba(255,255,255,0.5);margin-bottom:12px;');
+    guide.setAttribute('style', 'font-size:12px;line-height:1.7;color:var(--ark-text-dim);margin-bottom:12px;');
     guide.textContent = core.t('home.step1.guide');
     step.appendChild(guide);
 
@@ -120,8 +120,8 @@
     code.setAttribute('title', core.t('home.step1.copyHint'));
     code.setAttribute(
       'style',
-      'font-family:monospace;font-size:11px;background:rgba(255,255,255,0.08);padding:8px 10px;border-radius:6px;' +
-        'word-break:break-all;margin-bottom:12px;color:#f5f5f5;cursor:pointer;' +
+      'font-family:monospace;font-size:11px;background:var(--ark-fill);padding:8px 10px;border-radius:6px;' +
+        'word-break:break-all;margin-bottom:12px;color:var(--ark-text);cursor:pointer;' +
         'transition:background 0.2s ease;user-select:none;'
     );
     var CODE_CMD =
@@ -150,7 +150,7 @@
         code.style.background = 'rgba(63, 185, 80, 0.25)';
         copyTimer = setTimeout(function () {
           code.textContent = CODE_CMD;
-          code.style.background = 'rgba(255,255,255,0.08)';
+          code.style.background = 'var(--ark-fill)';
         }, 1600);
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -168,8 +168,8 @@
     input.type = 'text';
     input.setAttribute(
       'style',
-      'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid rgba(255,255,255,0.35);' +
-        'border-radius:6px;background:transparent;color:#f5f5f5;outline:none;'
+      'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid var(--ark-border);' +
+        'border-radius:6px;background:transparent;color:var(--ark-text);outline:none;'
     );
     input.placeholder = 'cred,token';
     step.appendChild(input);
@@ -198,7 +198,7 @@
       }
       clearError(step);
       state.credToken = credToken;
-      runBinding(wrap, step);
+      runBinding(wrap, step, nextBtn);
     });
 
     wrap.appendChild(step);
@@ -211,11 +211,11 @@
     step.setAttribute('data-page', 'step2');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,0.3);border-radius:10px;display:none;'
+      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:10px;display:none;'
     );
 
     var label = document.createElement('div');
-    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:#f5f5f5;');
+    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:var(--ark-text);');
     label.textContent = core.t('home.step2.title');
     step.appendChild(label);
 
@@ -231,8 +231,8 @@
     prevBtn.textContent = core.t('common.prev');
     prevBtn.setAttribute(
       'style',
-      'padding:8px 18px;font-size:13px;font-weight:500;color:#f5f5f5;background:transparent;' +
-        'border:1px solid rgba(255,255,255,0.35);border-radius:6px;cursor:pointer;'
+      'padding:8px 18px;font-size:13px;font-weight:500;color:var(--ark-text);background:transparent;' +
+        'border:1px solid var(--ark-border);border-radius:6px;cursor:pointer;'
     );
     prevBtn.addEventListener('click', function () {
       showPage(wrap, 'step1');
@@ -263,11 +263,12 @@
         btn.setAttribute(
           'style',
           'display:block;width:100%;text-align:left;margin-top:6px;padding:10px 12px;font-size:13px;' +
-            'color:#f5f5f5;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);' +
+            'color:var(--ark-text);background:var(--ark-fill-hover);border:1px solid var(--ark-border-weak);' +
             'border-radius:6px;cursor:pointer;'
         );
         btn.addEventListener('click', function () {
-          selectAccount(wrap, b);
+          if (btn.disabled) return;
+          selectAccount(wrap, b, btn);
         });
         listBox.appendChild(btn);
       })(state.binds[i]);
@@ -346,7 +347,7 @@
     nameBox.setAttribute('style', 'display:flex;flex-direction:column;gap:4px;');
 
     var name = document.createElement('div');
-    name.setAttribute('style', 'font-size:16px;font-weight:600;color:#f5f5f5;');
+    name.setAttribute('style', 'font-size:16px;font-weight:600;color:var(--ark-text);');
     name.textContent = status && status.name ? status.name : (data.nickName || '');
     nameBox.appendChild(name);
 
@@ -401,7 +402,7 @@
     var spacer = document.createElement('div');
     spacer.setAttribute(
       'style',
-      'flex:1;min-height:0;background:#313131;border:1px solid rgba(128,128,128,0);box-sizing:border-box;'
+      'flex:1;min-height:0;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);box-sizing:border-box;'
     );
     leftCol.appendChild(spacer);
 
@@ -415,7 +416,7 @@
       myCharsPlaceholder.replaceWith(assets.buildMyChars(player.chars, player.charInfoMap));
     }).catch(function () {
       var fail = document.createElement('div');
-      fail.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);padding:16px;text-align:center;');
+      fail.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);padding:16px;text-align:center;');
       fail.textContent = core.t('home.loadFail');
       assistPlaceholder.replaceWith(fail);
       myCharsPlaceholder.replaceWith(fail.cloneNode(true));
@@ -479,13 +480,32 @@
     if (old) old.remove();
   }
 
-  async function runBinding(wrap, step) {
+  function setButtonLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+      if (btn._loading) return;
+      btn._loading = true;
+      btn._origText = btn.textContent;
+      btn.disabled = true;
+      var sp = document.createElement('span');
+      sp.setAttribute('class', 'ark-btn-spinner');
+      btn.textContent = '';
+      btn.appendChild(sp);
+    } else {
+      btn._loading = false;
+      btn.disabled = false;
+      btn.textContent = btn._origText || '';
+    }
+  }
+
+  async function runBinding(wrap, step, btn) {
     var skland = window.__arkSkland;
     if (!skland) {
       showError(step, core.t('home.errorModule'));
       return;
     }
 
+    setButtonLoading(btn, true);
     try {
       var bindingRes = await skland.getPlayerBinding(state.credToken);
       var list = bindingRes && bindingRes.data && bindingRes.data.list;
@@ -505,7 +525,7 @@
 
       state.binds = binds;
       if (binds.length === 1) {
-        selectAccount(wrap, binds[0]);
+        await selectAccount(wrap, binds[0]);
         return;
       }
 
@@ -514,10 +534,12 @@
       showPage(wrap, 'step2');
     } catch (e) {
       showError(step, String((e && e.message) || e));
+    } finally {
+      setButtonLoading(btn, false);
     }
   }
 
-  async function selectAccount(wrap, binding) {
+  async function selectAccount(wrap, binding, btn) {
     var credToken = state.credToken;
     if (!credToken) {
       try { credToken = (await Tapp.settings.get('sklandToken')) || ''; } catch (e) {}
@@ -526,10 +548,24 @@
     var skland = window.__arkSkland;
     if (!skland) return;
 
+    var listBox = wrap.querySelector('[data-account-list]');
+    var siblings = [];
+    if (listBox && btn) {
+      siblings = listBox.querySelectorAll('button');
+    }
+
+    setButtonLoading(btn, true);
+    for (var i = 0; i < siblings.length; i++) {
+      if (siblings[i] !== btn) {
+        siblings[i].disabled = true;
+        siblings[i].style.opacity = '0.6';
+      }
+    }
+
     try {
       var info = await skland.getPlayerInfo(binding.uid, credToken);
       var data = info && info.data ? info.data : null;
-      await Tapp.storage.set(PLAYER_DATA_KEY, {
+      await Tapp.shared.set(PLAYER_DATA_KEY, {
         ts: Date.now(),
         data: {
           uid: binding.uid,
@@ -546,6 +582,14 @@
       });
     } catch (e) {
       showError(wrap.querySelector('[data-page="step2"]'), String((e && e.message) || e));
+    } finally {
+      setButtonLoading(btn, false);
+      for (var j = 0; j < siblings.length; j++) {
+        if (siblings[j] !== btn) {
+          siblings[j].disabled = false;
+          siblings[j].style.opacity = '';
+        }
+      }
     }
   }
 

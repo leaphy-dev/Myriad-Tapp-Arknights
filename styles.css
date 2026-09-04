@@ -1,7 +1,21 @@
 :root {
-  color-scheme: light dark;
-  --ark-gold: #d4b483;
-  --ark-gold-dim: rgba(212, 180, 131, 0.35);
+  color-scheme: light;
+
+  /* 主题色 · 亮色（默认，html 无 .dark 类） */
+  --ark-gold: #b0803a;
+  --ark-gold-dim: rgba(176, 128, 58, 0.35);
+  --ark-bg: #f5f5f5;
+  --ark-text: #1a1a1a;
+  --ark-text-dim: rgba(0, 0, 0, 0.55);
+  --ark-text-muted: #3a3a3a;
+  --ark-panel: #ffffff;
+  --ark-panel-2: #fafafa;
+  --ark-border: rgba(0, 0, 0, 0.22);
+  --ark-border-strong: rgba(0, 0, 0, 0.35);
+  --ark-border-weak: rgba(0, 0, 0, 0.12);
+  --ark-fill: rgba(0, 0, 0, 0.05);
+  --ark-fill-hover: rgba(0, 0, 0, 0.08);
+  --ark-spinner-track: rgba(0, 0, 0, 0.15);
 
   /* 响应式尺寸：clamp 随视口流畅缩放，媒体查询做断点覆盖 */
   --char-card-w: clamp(84px, 9vw, 120px);   /* 干员卡片宽 */
@@ -9,6 +23,26 @@
   --assist-avatar: clamp(84px, 9vw, 100px); /* 助战头像 */
   --player-avatar: clamp(56px, 6vw, 64px);  /* 玩家头像 */
   --left-col-w: clamp(300px, 32vw, 460px);  /* 宽屏左列宽 */
+}
+
+html.dark {
+  color-scheme: dark;
+
+  /* 主题色 · 暗色 */
+  --ark-gold: #d4b483;
+  --ark-gold-dim: rgba(212, 180, 131, 0.35);
+  --ark-bg: #0a0a0a;
+  --ark-text: #f5f5f5;
+  --ark-text-dim: rgba(255, 255, 255, 0.5);
+  --ark-text-muted: #e0e0e0;
+  --ark-panel: #313131;
+  --ark-panel-2: #1a1a1a;
+  --ark-border: rgba(255, 255, 255, 0.35);
+  --ark-border-strong: rgba(255, 255, 255, 0.3);
+  --ark-border-weak: rgba(255, 255, 255, 0.12);
+  --ark-fill: rgba(255, 255, 255, 0.08);
+  --ark-fill-hover: rgba(255, 255, 255, 0.05);
+  --ark-spinner-track: rgba(255, 255, 255, 0.18);
 }
 
 html,
@@ -42,7 +76,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #0a0a0a;
+  background-color: var(--ark-bg);
+}
+
+/* 暗色模式：灰色点网格背景 */
+html.dark .home-view,
+html.dark .collection-view {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 .ark-home-inner {
@@ -97,12 +138,6 @@ body {
   text-shadow: 0 0 18px var(--ark-gold-dim);
 }
 
-@media (prefers-color-scheme: dark) {
-  .ark-title {
-    color: var(--ark-gold);
-  }
-}
-
 /* ========================================
    Loading spinner / 加载圈
    ======================================== */
@@ -116,11 +151,24 @@ body {
 .ark-spinner {
   width: 22px;
   height: 22px;
-  border: 2px solid rgba(255, 255, 255, 0.18);
+  border: 2px solid var(--ark-spinner-track);
   border-top-color: var(--ark-gold);
   border-radius: 50%;
   animation: ark-spin 0.8s linear infinite;
   box-sizing: border-box;
+}
+
+/* 按钮内联加载圈（跟随按钮文字颜色） */
+.ark-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(127, 127, 127, 0.4);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ark-spin 0.8s linear infinite;
+  display: inline-block;
+  box-sizing: border-box;
+  vertical-align: middle;
 }
 
 .ark-spinner-box {
@@ -203,11 +251,11 @@ body {
 }
 
 [data-game-content].scrolling {
-  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  scrollbar-color: var(--ark-border) transparent;
 }
 
 [data-game-content].scrolling::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--ark-border);
 }
 
 .ark-game-tabbar::-webkit-scrollbar {
@@ -237,11 +285,11 @@ body {
 }
 
 .ark-my-chars-scroll.scrolling {
-  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  scrollbar-color: var(--ark-border) transparent;
 }
 
 .ark-my-chars-scroll.scrolling::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.35);
+  background: var(--ark-border);
 }
 
 /* ========================================

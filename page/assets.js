@@ -220,13 +220,13 @@
     var wrap = document.createElement('div');
     // wrap.setAttribute(
     //   'style',
-    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
     //     'width:100%;box-sizing:border-box;min-width:0;'
     // );
 
     wrap.setAttribute(
       'style',
-      'padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
         'width:100%;box-sizing:border-box;min-width:0;'
     );
 
@@ -234,11 +234,11 @@
     header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;');
 
     var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
+    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
     zh.textContent = core.t('assets.supportUnits');
 
     var en = document.createElement('span');
-    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
+    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
     en.textContent = '// SUPPORT UNITS';
 
     header.appendChild(zh);
@@ -247,7 +247,7 @@
 
     if (!list.length) {
       var empty = document.createElement('div');
-      empty.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);');
+      empty.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);');
       empty.textContent = core.t('assets.noSupport');
       wrap.appendChild(empty);
       return wrap;
@@ -274,7 +274,7 @@
       var name = document.createElement('div');
       name.setAttribute(
         'style',
-        'font-size:10px;color:#e0e0e0;max-width:calc(var(--assist-avatar) + 8px);' +
+        'font-size:10px;color:var(--ark-text-muted);max-width:calc(var(--assist-avatar) + 8px);' +
           'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
       );
       name.textContent = operatorName(op.id);
@@ -303,13 +303,13 @@
     var wrap = document.createElement('div');
     // wrap.setAttribute(
     //   'style',
-    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
     //     'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
     // );
 
     wrap.setAttribute(
       'style',
-      'padding:12px;background:#313131;border:1px solid rgba(128, 128, 128, 0);' +
+      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
         'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
     );
 
@@ -320,11 +320,11 @@
     left.setAttribute('style', 'display:flex;align-items:baseline;gap:8px;');
 
     var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
+    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
     zh.textContent = core.t('assets.myOperators');
 
     var en = document.createElement('span');
-    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
+    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
     en.textContent = '// MY OPERATORS';
 
     left.appendChild(zh);
@@ -337,7 +337,7 @@
     arrow.textContent = '→';
     arrow.setAttribute(
       'style',
-      'font-size:14px;font-weight:600;color:#f5f5f5;background:transparent;border:none;' +
+      'font-size:14px;font-weight:600;color:var(--ark-text);background:transparent;border:none;' +
         'cursor:pointer;padding:0 4px;line-height:1;'
     );
     header.appendChild(arrow);
@@ -346,7 +346,7 @@
 
     if (!list.length) {
       var empty = document.createElement('div');
-      empty.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);');
+      empty.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);');
       empty.textContent = core.t('assets.noOperators');
       wrap.appendChild(empty);
       return wrap;
@@ -573,14 +573,14 @@
     var wrap = document.createElement('div');
     // wrap.setAttribute(
     //   'style',
-    //   'display:flex;gap:8px;margin-top:12px;padding:12px;background:#313131;' +
-    //     'border:1px solid rgba(128,128,128,0.2);width:100%;box-sizing:border-box;min-width:0;'
+    //   'display:flex;gap:8px;margin-top:12px;padding:12px;background:var(--ark-panel);' +
+    //     'border:1px solid var(--ark-border-weak);width:100%;box-sizing:border-box;min-width:0;'
     // );
 
     wrap.setAttribute(
       'style',
-      'display:flex;gap:8px;padding:12px;background:#313131;' +
-        'border:1px solid rgba(128,128,128,0.2);width:100%;box-sizing:border-box;min-width:0;'
+      'display:flex;gap:8px;padding:12px;background:var(--ark-panel);' +
+        'border:1px solid var(--ark-border-weak);width:100%;box-sizing:border-box;min-width:0;'
     );    
 
     var rows = [
@@ -595,12 +595,12 @@
       var cell = document.createElement('div');
       cell.setAttribute('style', 'flex:1;min-width:0;text-align:center;');
       var lab = document.createElement('div');
-      lab.setAttribute('style', 'font-size:9px;color:rgba(255,255,255,0.5);white-space:nowrap;');
+      lab.setAttribute('style', 'font-size:9px;color:var(--ark-text-dim);white-space:nowrap;');
       lab.textContent = rows[i][0];
       var val = document.createElement('div');
       val.setAttribute(
         'style',
-        'font-size:12px;font-weight:600;color:#f5f5f5;margin-top:2px;' +
+        'font-size:12px;font-weight:600;color:var(--ark-text);margin-top:2px;' +
           'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
       );
       val.textContent = rows[i][1];
@@ -627,13 +627,13 @@
     wrap.setAttribute('class', 'ark-game-data');
     // wrap.setAttribute(
     //   'style',
-    //   'margin-top:12px;padding:12px;background:#313131;border:1px solid rgba(128,128,128,0);' +
+    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);' +
     //     'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
     // );
 
     wrap.setAttribute(
       'style',
-      'padding:12px;background:#313131;border:1px solid rgba(128,128,128,0);' +
+      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);' +
         'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
     );
 
@@ -641,11 +641,11 @@
     header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-shrink:0;');
 
     var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:#f5f5f5;');
+    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
     zh.textContent = core.t('assets.gameData');
 
     var en = document.createElement('span');
-    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:rgba(255,255,255,0.5);');
+    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
     en.textContent = '// GAME DATA';
 
     header.appendChild(zh);
@@ -699,14 +699,14 @@
     fadeTop.setAttribute(
       'style',
       'position:absolute;top:0;left:0;right:0;height:36px;pointer-events:none;z-index:5;' +
-        'background:linear-gradient(to bottom, #313131, rgba(49,49,49,0));transition:opacity 0.2s ease;'
+        'background:linear-gradient(to bottom, var(--ark-panel), transparent);transition:opacity 0.2s ease;'
     );
 
     var fadeBottom = document.createElement('div');
     fadeBottom.setAttribute(
       'style',
       'position:absolute;bottom:0;left:0;right:0;height:36px;pointer-events:none;z-index:5;' +
-        'background:linear-gradient(to top, #313131, rgba(49,49,49,0));transition:opacity 0.2s ease;'
+        'background:linear-gradient(to top, var(--ark-panel), transparent);transition:opacity 0.2s ease;'
     );
 
     body.appendChild(contentBox);
@@ -723,8 +723,8 @@
         tab.textContent = label;
         tab.setAttribute(
           'style',
-          'flex-shrink:0;padding:0 16px;height:32px;line-height:32px;font-size:12px;color:#e0e0e0;' +
-            'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:0;cursor:pointer;'
+          'flex-shrink:0;padding:0 16px;height:32px;line-height:32px;font-size:12px;color:var(--ark-text-muted);' +
+            'background:var(--ark-fill);border:1px solid var(--ark-border-weak);border-radius:0;cursor:pointer;'
         );
         tab.addEventListener('click', function () {
           contentBox.innerHTML = '';
@@ -751,10 +751,10 @@
     var row = document.createElement('div');
     row.setAttribute('style', 'display:flex;justify-content:space-between;gap:8px;padding:4px 0;');
     var l = document.createElement('span');
-    l.setAttribute('style', 'font-size:11px;color:rgba(255,255,255,0.5);');
+    l.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);');
     l.textContent = label;
     var v = document.createElement('span');
-    v.setAttribute('style', 'font-size:11px;color:#e0e0e0;');
+    v.setAttribute('style', 'font-size:11px;color:var(--ark-text-muted);');
     v.textContent = value;
     row.appendChild(l);
     row.appendChild(v);

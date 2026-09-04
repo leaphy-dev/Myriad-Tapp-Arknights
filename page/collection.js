@@ -51,12 +51,12 @@
     back.setAttribute('data-nav', 'home');
     back.setAttribute(
       'style',
-      'padding:6px 14px;font-size:13px;color:#f5f5f5;background:transparent;' +
-        'border:1px solid rgba(255,255,255,0.35);border-radius:6px;cursor:pointer;'
+      'padding:6px 14px;font-size:13px;color:var(--ark-text);background:transparent;' +
+        'border:1px solid var(--ark-border);border-radius:6px;cursor:pointer;'
     );
 
     var title = document.createElement('h1');
-    title.setAttribute('style', 'font-size:18px;font-weight:600;margin:0;color:#f5f5f5;');
+    title.setAttribute('style', 'font-size:18px;font-weight:600;margin:0;color:var(--ark-text);');
     title.textContent = core.t('collection.title');
 
     topBar.appendChild(back);
@@ -66,7 +66,7 @@
     var assets = window.__arkAssets;
     if (!assets) return;
 
-    Tapp.storage.get(PLAYER_DATA_KEY).then(function (stored) {
+    Tapp.shared.get(PLAYER_DATA_KEY).then(function (stored) {
       var player = stored && stored.data && stored.data.player ? stored.data.player : {};
       return assets.loadAssets().then(function () {
         assets.setCharInfoMap(player.charInfoMap);
@@ -83,6 +83,7 @@
     var chars = (player && Array.isArray(player.chars)) ? player.chars.slice() : [];
 
     var filterState = { professions: [], rarities: [], sortBy: 'rarity' };
+    var filterTool = null;
 
     var tabBar = document.createElement('div');
     tabBar.setAttribute('style', 'position:relative;display:flex;justify-content:center;gap:64px;margin-bottom:20px;');
@@ -95,9 +96,9 @@
     var indicator = document.createElement('div');
     indicator.setAttribute('style', 'position:absolute;bottom:-8px;left:0;width:0;transition:left 0.25s ease;pointer-events:none;');
     var arrow = document.createElement('div');
-    arrow.setAttribute('style', 'width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:5px solid #fff;margin:0 auto;');
+    arrow.setAttribute('style', 'width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:5px solid var(--ark-text);margin:0 auto;');
     var line = document.createElement('div');
-    line.setAttribute('style', 'height:2px;background:#fff;');
+    line.setAttribute('style', 'height:2px;background:var(--ark-text);');
     indicator.appendChild(arrow);
     indicator.appendChild(line);
     tabBar.appendChild(indicator);
@@ -118,14 +119,16 @@
       if (active === 'char') {
         charPanel.style.display = 'block';
         skinPanel.style.display = 'none';
-        tabChar.style.color = '#fff';
-        tabSkin.style.color = 'rgba(255,255,255,0.5)';
+        tabChar.style.color = 'var(--ark-text)';
+        tabSkin.style.color = 'var(--ark-text-dim)';
+        if (filterTool) filterTool.style.display = 'block';
         positionIndicator(tabChar);
       } else {
         charPanel.style.display = 'none';
         skinPanel.style.display = 'block';
-        tabSkin.style.color = '#fff';
-        tabChar.style.color = 'rgba(255,255,255,0.5)';
+        tabSkin.style.color = 'var(--ark-text)';
+        tabChar.style.color = 'var(--ark-text-dim)';
+        if (filterTool) filterTool.style.display = 'none';
         positionIndicator(tabSkin);
       }
     }
@@ -134,7 +137,7 @@
     tabSkin.addEventListener('click', function () { setActiveTab('skin'); });
     setActiveTab('char');
 
-    var filterTool = buildFilterTool(assets, filterState, function () {
+    filterTool = buildFilterTool(assets, filterState, function () {
       var newPanel = renderCharPanel(chars, charInfoMap, assets, filterState);
       charPanel.replaceWith(newPanel);
       charPanel = newPanel;
@@ -146,7 +149,7 @@
   function makeTabText(label) {
     var span = document.createElement('span');
     span.textContent = label;
-    span.setAttribute('style', 'cursor:pointer;color:#fff;font-size:15px;font-weight:600;user-select:none;');
+    span.setAttribute('style', 'cursor:pointer;color:var(--ark-text);font-size:15px;font-weight:600;user-select:none;');
     return span;
   }
 
@@ -155,21 +158,21 @@
     container.setAttribute('style', 'position:relative;margin-bottom:12px;z-index:50;');
 
     var toggle = document.createElement('div');
-    toggle.setAttribute('style', 'cursor:pointer;color:#fff;font-size:14px;padding:6px 0;user-select:none;text-align:center;');
+    toggle.setAttribute('style', 'cursor:pointer;color:var(--ark-text);font-size:14px;padding:6px 0;user-select:none;text-align:center;');
     toggle.textContent = core.t('collection.filter') + ' ▾';
     container.appendChild(toggle);
 
     var panel = document.createElement('div');
     panel.setAttribute(
       'style',
-      'position:absolute;top:100%;left:0;width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,0.18);' +
+      'position:absolute;top:100%;left:0;width:100%;background:var(--ark-panel-2);border:1px solid var(--ark-border-weak);' +
         'padding:14px;box-sizing:border-box;opacity:0;transform:translateY(-8px);visibility:hidden;' +
         'transition:opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;'
     );
 
     function sectionTitle(text) {
       var t = document.createElement('div');
-      t.setAttribute('style', 'font-size:12px;color:#fff;margin-bottom:8px;text-align:center;');
+      t.setAttribute('style', 'font-size:12px;color:var(--ark-text);margin-bottom:8px;text-align:center;');
       t.textContent = text;
       return t;
     }
@@ -202,7 +205,7 @@
       (function (opt) {
         var chip = document.createElement('div');
         chip.textContent = core.t(opt.labelKey);
-        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,0.35);user-select:none;opacity:0.5;');
+        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:var(--ark-text);cursor:pointer;border:1px solid var(--ark-border);user-select:none;opacity:0.5;');
         chip.addEventListener('click', function () {
           var i = filterState.rarities.indexOf(opt.key);
           var on = i === -1;
@@ -223,7 +226,7 @@
       (function (opt) {
         var chip = document.createElement('div');
         chip.textContent = core.t(opt.labelKey);
-        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:#fff;cursor:pointer;border:1px solid rgba(255,255,255,0.35);user-select:none;opacity:0.5;');
+        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:var(--ark-text);cursor:pointer;border:1px solid var(--ark-border);user-select:none;opacity:0.5;');
         chip.addEventListener('click', function () {
           filterState.sortBy = (filterState.sortBy === opt.key) ? 'rarity' : opt.key;
           refreshSort();
@@ -284,7 +287,7 @@
     sortChars(list, charInfoMap, filterState ? filterState.sortBy : 'rarity');
 
     if (!list.length) {
-      panel.setAttribute('style', 'font-size:12px;color:rgba(255,255,255,0.5);');
+      panel.setAttribute('style', 'font-size:12px;color:var(--ark-text-dim);');
       panel.textContent = core.t('collection.empty');
       return panel;
     }
@@ -336,8 +339,8 @@
     var panel = document.createElement('div');
     panel.setAttribute(
       'style',
-      'padding:32px;text-align:center;font-size:13px;color:rgba(255,255,255,0.5);' +
-        'border:1px dashed rgba(255,255,255,0.2);border-radius:8px;'
+      'padding:32px;text-align:center;font-size:13px;color:var(--ark-text-dim);' +
+        'border:1px dashed var(--ark-border-weak);border-radius:8px;'
     );
     panel.textContent = core.t('collection.skinTodoPrefix') + Object.keys(skinInfoMap || {}).length + core.t('collection.skinTodoSuffix');
     return panel;
