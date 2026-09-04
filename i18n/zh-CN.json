@@ -45,6 +45,9 @@
     "skinTodoPrefix": "时装资产 · TODO（",
     "skinTodoSuffix": " 个皮肤）"
   },
+  "widget": {
+    "empty": "暂无玩家数据，请在应用页面绑定账号"
+  },
   "assets": {
     "supportUnits": "助战干员",
     "noSupport": "暂无助战",

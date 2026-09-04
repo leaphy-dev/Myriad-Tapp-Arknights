@@ -15,6 +15,22 @@
     "entry": "page/index.js",
     "template": "page.html"
   },
+  "widgets": [
+    {
+      "id": "player-summary",
+      "name": "玩家信息",
+      "description": "展示玩家头像、名称与数据概要（4x4 额外展示助战干员）",
+      "icon": "🛡️",
+      "defaultSize": "4x2",
+      "sizes": ["4x2", "4x4"],
+      "category": "utility",
+      "entry": "widget/player-summary.js",
+      "refreshPolicy": {
+        "mode": "event",
+        "refreshOnVisible": true
+      }
+    }
+  ],
   "author": {
     "name": "Leaphy"
   },
@@ -24,7 +40,8 @@
     "network:fetch",
     "ui:notification",
     "ui:theme",
-    "ui:confirm"
+    "ui:confirm",
+    "widget:register"
   ],
   "assets": [
     "assets/rank/elite0.png",

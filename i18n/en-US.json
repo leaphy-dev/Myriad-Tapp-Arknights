@@ -45,6 +45,9 @@
     "skinTodoPrefix": "Skin assets · TODO (",
     "skinTodoSuffix": " skins)"
   },
+  "widget": {
+    "empty": "No player data. Bind an account in the app."
+  },
   "assets": {
     "supportUnits": "Support units",
     "noSupport": "No support units",

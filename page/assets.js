@@ -550,25 +550,8 @@
     return card;
   }
 
-  function countUniqueChars(player) {
-    var chars = player && Array.isArray(player.chars) ? player.chars : [];
-    var seen = {};
-    var count = 0;
-    for (var i = 0; i < chars.length; i++) {
-      var id = chars[i] && (chars[i].charId || chars[i].id);
-      if (id && !seen[id]) {
-        seen[id] = true;
-        count++;
-      }
-    }
-    return count || null;
-  }
-
   function buildPlayerInfoCard(player) {
-    var status = player && player.status;
-    var medal = player && player.medal;
-    var charCount = countUniqueChars(player);
-    var furnitureTotal = player && player.building && player.building.furniture && player.building.furniture.total;
+    var summary = core.getPlayerSummary({ player: player });
 
     var wrap = document.createElement('div');
     // wrap.setAttribute(
@@ -583,20 +566,14 @@
         'border:1px solid var(--ark-border-weak);width:100%;box-sizing:border-box;min-width:0;'
     );    
 
-    var rows = [
-      [core.t('assets.progress'), status && status.mainStageProgress ? status.mainStageProgress : '-'],
-      [core.t('assets.operators'), charCount != null ? String(charCount) : (status && status.charCnt !== undefined ? String(status.charCnt) : '-')],
-      [core.t('assets.skins'), status && status.skinCnt !== undefined ? String(status.skinCnt) : '-'],
-      [core.t('assets.furniture'), furnitureTotal !== undefined ? String(furnitureTotal) : '-'],
-      [core.t('assets.medals'), medalCount(medal)]
-    ];
+    var rows = summary.items;
 
     for (var i = 0; i < rows.length; i++) {
       var cell = document.createElement('div');
       cell.setAttribute('style', 'flex:1;min-width:0;text-align:center;');
       var lab = document.createElement('div');
       lab.setAttribute('style', 'font-size:9px;color:var(--ark-text-dim);white-space:nowrap;');
-      lab.textContent = rows[i][0];
+      lab.textContent = core.t(rows[i][0]);
       var val = document.createElement('div');
       val.setAttribute(
         'style',
@@ -610,16 +587,6 @@
     }
 
     return wrap;
-  }
-
-  function medalCount(medal) {
-    if (!medal) return '-';
-    if (typeof medal === 'object') {
-      if (medal.total !== undefined) return String(medal.total);
-      var keys = Object.keys(medal);
-      if (keys.length) return String(keys.length);
-    }
-    return String(medal);
   }
 
   function buildGameDataCard(player) {
