@@ -400,11 +400,25 @@
     leftCol.appendChild(myCharsPlaceholder);
 
     var spacer = document.createElement('div');
+    spacer.setAttribute('class', 'ark-home-spacer');
     spacer.setAttribute(
       'style',
       'flex:1;min-height:0;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);box-sizing:border-box;'
     );
     leftCol.appendChild(spacer);
+
+    // 双列模式下，空白卡片高度低于 14px 时隐藏（背景透明），避免底部出现细线；
+    // 单列模式由 styles.css 的 .ark-home-spacer 媒体查询直接 display:none
+    function syncSpacer() {
+      spacer.style.background = spacer.offsetHeight < 14 ? 'transparent' : 'var(--ark-panel)';
+    }
+
+    if (typeof ResizeObserver !== 'undefined') {
+      var spacerObserver = new ResizeObserver(syncSpacer);
+      spacerObserver.observe(spacer);
+    } else {
+      syncSpacer();
+    }
 
     layout.appendChild(leftCol);
     layout.appendChild(rightCol);
