@@ -104,6 +104,17 @@ body {
   margin: 0 auto;
 }
 
+/* 主页页脚：名称版本 + 版权说明（字体样式仿 debug 按钮） */
+.ark-app-footer {
+  text-align: center;
+  padding: 24px 16px 40px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ark-text-dim);
+  opacity: 0.65;
+  line-height: 2;
+}
+
 /* 暗色模式：灰色点网格背景（已弃用，改用 assets/page_mask.png 资源）
 html.dark .home-view,
 html.dark .collection-view {

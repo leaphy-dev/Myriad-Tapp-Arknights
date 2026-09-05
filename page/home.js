@@ -47,7 +47,9 @@
     refreshBtn.addEventListener('click', function () {
       showPage(wrap, 'step1');
     });
-    navRow.appendChild(refreshBtn);
+    if (window.__arkIsAdmin) {
+      navRow.appendChild(refreshBtn);
+    }
 
     wrap.appendChild(navRow);
 
@@ -55,20 +57,34 @@
     buildStep2(wrap);
     buildDisplay(wrap);
 
-    var footer = document.createElement('div');
-    footer.setAttribute('class', 'ark-page-footer');
-    footer.setAttribute('style', 'text-align:center;margin-top:24px;font-size:12px;color:var(--ark-text-dim);');
-    var debugLink = document.createElement('button');
-    debugLink.type = 'button';
-    debugLink.textContent = 'Debug';
-    debugLink.setAttribute('data-nav', 'debug');
-    debugLink.setAttribute(
-      'style',
-      'padding:2px 8px;font-size:10px;color:var(--ark-text-dim);background:transparent;' +
-        'border:none;cursor:pointer;'
-    );
-    footer.appendChild(debugLink);
-    homeSection.appendChild(footer);
+    // 页脚：debug 按钮（仅管理员，位于版权文字上方）+ 名称版本 + 版权说明
+    var footer = document.createElement('footer');
+    footer.setAttribute('class', 'ark-app-footer');
+
+    if (window.__arkIsAdmin) {
+      var debugLink = document.createElement('button');
+      debugLink.type = 'button';
+      debugLink.textContent = 'Debug';
+      debugLink.setAttribute('data-nav', 'debug');
+      debugLink.setAttribute(
+        'style',
+        'padding:2px 8px;font-size:10px;color:var(--ark-text-dim);background:transparent;' +
+          'border:none;cursor:pointer;'
+      );
+      footer.appendChild(debugLink);
+    }
+
+    var verLine = document.createElement('div');
+    var copyLine = document.createElement('div');
+    copyLine.textContent = core.t('footer.copyright');
+    footer.appendChild(verLine);
+    footer.appendChild(copyLine);
+    wrap.appendChild(footer);
+
+    try {
+      var info = Tapp.lifecycle.getInfo();
+      verLine.textContent = core.t('title') + ' · v' + (info && info.version ? info.version : '');
+    } catch (e) {}
 
     initView(wrap);
   }

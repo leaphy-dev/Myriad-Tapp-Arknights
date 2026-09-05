@@ -52,6 +52,7 @@ require('./debug.js');
 
   function navigate(name) {
     if (VIEW_NAMES.indexOf(name) === -1) name = DEFAULT_VIEW;
+    if (name === 'debug' && !window.__arkIsAdmin) return;
 
     var container = document.getElementById('tapp-content');
     if (!container) return;
@@ -83,6 +84,12 @@ require('./debug.js');
 
   Tapp.lifecycle.onReady(async function () {
     var container = document.getElementById('tapp-content');
+
+    try {
+      window.__arkIsAdmin = await Tapp.user.isAdmin();
+    } catch (e) {
+      window.__arkIsAdmin = false;
+    }
 
     if (container) {
       core.applyI18n(container);

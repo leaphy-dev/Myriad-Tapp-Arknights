@@ -48,6 +48,9 @@
   "widget": {
     "empty": "No player data. Bind an account in the app."
   },
+  "footer": {
+    "copyright": "All company names, trademarks, and products mentioned are the property of their respective owners and are used for identification only. Game images, animations, audio, and original text used in this Tapp are provided solely to better present game data; their copyright belongs to Arknights / Shanghai Hypergryph Network Technology Co., Ltd."
+  },
   "assets": {
     "supportUnits": "Support units",
     "noSupport": "No support units",
