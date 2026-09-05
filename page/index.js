@@ -115,11 +115,18 @@ require('./debug.js');
       });
     } catch (e) {}
 
-    // 加载页面遮罩资源，应用到亮/暗两种模式的页面背景
+    // 加载页面遮罩（仅暗色）与装饰纹样（亮/暗平铺）资源
     try {
-      var mask = await Tapp.assets.getUrl('assets/page_mask.png');
+      var mask = await Tapp.assets.getUrl('assets/decoration/page_mask_dark.png');
       if (mask && mask.url) {
         document.documentElement.style.setProperty('--page-mask', 'url("' + mask.url + '")');
+      }
+    } catch (e) {}
+
+    try {
+      var decorator = await Tapp.assets.getUrl('assets/decoration/decorator_dark.png');
+      if (decorator && decorator.url) {
+        document.documentElement.style.setProperty('--page-decorator', 'url("' + decorator.url + '")');
       }
     } catch (e) {}
 

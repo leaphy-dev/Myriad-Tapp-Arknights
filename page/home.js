@@ -19,6 +19,13 @@
     wrap.setAttribute('class', 'ark-page-inner');
     homeSection.appendChild(wrap);
 
+    var loading = document.createElement('div');
+    loading.setAttribute('class', 'ark-page-loading');
+    loading.setAttribute('role', 'status');
+    loading.setAttribute('aria-label', core.t('home.loading'));
+    loading.innerHTML = '<div class="ak-loading" style="--ak-loading-color:var(--ak-text-primary);"></div>';
+    homeSection.appendChild(loading);
+
     var navRow = document.createElement('div');
     navRow.setAttribute('class', 'ark-page-nav');
     navRow.setAttribute('style', 'display:flex;align-items:center;justify-content:space-between;');
@@ -31,16 +38,12 @@
 
     var refreshBtn = document.createElement('button');
     refreshBtn.type = 'button';
-    refreshBtn.setAttribute('class', 'ark-refresh-btn');
+    refreshBtn.setAttribute('class', 'ak-button ak-button--fab ak-fx--skew-left');
+    refreshBtn.setAttribute('data-refresh-btn', '1');
+    refreshBtn.setAttribute('aria-label', core.t('home.refresh'));
     refreshBtn.setAttribute('title', core.t('home.refresh'));
-    refreshBtn.setAttribute(
-      'style',
-      'width:36px;height:36px;display:flex;align-items:center;justify-content:center;' +
-        'border:1px solid var(--ark-border-strong);border-radius:50%;background:transparent;' +
-        'color:var(--ark-text);cursor:pointer;flex-shrink:0;padding:0;'
-    );
     refreshBtn.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<svg class="ak-fx--skew-right" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<polyline points="23 4 23 10 17 10"></polyline>' +
         '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' +
       '</svg>';
@@ -95,12 +98,17 @@
       stored = await Tapp.shared.get(PLAYER_DATA_KEY);
     } catch (e) {}
 
+    updateRefreshTime(wrap, stored);
+
     if (stored && stored.data && stored.data.player) {
       showPage(wrap, 'display');
       renderDisplay(wrap, stored.data);
     } else {
       showPage(wrap, 'step1');
     }
+
+    var loading = wrap.parentNode.querySelector('.ark-page-loading');
+    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
   }
 
   function showPage(wrap, name) {
@@ -112,6 +120,48 @@
     for (var key in pages) {
       if (pages[key]) pages[key].style.display = key === name ? (key === 'display' ? 'flex' : 'block') : 'none';
     }
+    var refreshBtn = wrap.querySelector('[data-refresh-btn]');
+    if (refreshBtn) refreshBtn.style.display = name === 'display' ? '' : 'none';
+  }
+
+  function makeCancelBtn(wrap) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = core.t('common.cancel');
+    btn.setAttribute('class', 'ak-button ak-button--ghost');
+    btn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
+    btn.addEventListener('click', function () {
+      cancelRefresh(wrap);
+    });
+    return btn;
+  }
+
+  async function cancelRefresh(wrap) {
+    var stored = null;
+    try {
+      stored = await Tapp.shared.get(PLAYER_DATA_KEY);
+    } catch (e) {}
+    if (stored && stored.data && stored.data.player) {
+      renderDisplay(wrap, stored.data);
+      showPage(wrap, 'display');
+    }
+  }
+
+  function formatTs(ts) {
+    var d = new Date(Number(ts));
+    if (isNaN(d.getTime())) return '';
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    var h = String(d.getHours()).padStart(2, '0');
+    var mi = String(d.getMinutes()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day + ' ' + h + ':' + mi;
+  }
+
+  function updateRefreshTime(wrap, stored) {
+    var el = wrap.querySelector('[data-refresh-time]');
+    if (!el) return;
+    var t = stored && stored.ts ? formatTs(stored.ts) : '';
+    el.textContent = t ? core.t('home.refreshTime') + ' ' + t : '';
   }
 
   // ==================== Step 1 · Token ====================
@@ -119,9 +169,10 @@
   function buildStep1(wrap) {
     var step = document.createElement('div');
     step.setAttribute('data-page', 'step1');
+    step.setAttribute('class', 'ak-cut-tr ak-surface');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:10px;display:none;'
+      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:0;display:none;'
     );
 
     var label = document.createElement('div');
@@ -138,7 +189,7 @@
     code.setAttribute('title', core.t('home.step1.copyHint'));
     code.setAttribute(
       'style',
-      'font-family:monospace;font-size:11px;background:var(--ark-fill);padding:8px 10px;border-radius:6px;' +
+      'font-family:var(--ak-font-mono);font-size:11px;background:var(--ark-fill);padding:8px 10px;border-radius:var(--ak-radius-subtle);' +
         'word-break:break-all;margin-bottom:12px;color:var(--ark-text);cursor:pointer;' +
         'transition:background 0.2s ease;user-select:none;'
     );
@@ -187,22 +238,21 @@
     input.setAttribute(
       'style',
       'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid var(--ark-border);' +
-        'border-radius:6px;background:transparent;color:var(--ark-text);outline:none;'
+        'border-radius:var(--ak-radius-subtle);background:transparent;color:var(--ark-text);'
     );
     input.placeholder = 'cred,token';
     step.appendChild(input);
 
     var navRow = document.createElement('div');
-    navRow.setAttribute('style', 'display:flex;justify-content:flex-end;gap:8px;margin-top:12px;');
+    navRow.setAttribute('style', 'display:flex;justify-content:space-between;gap:8px;margin-top:12px;');
+
+    navRow.appendChild(makeCancelBtn(wrap));
 
     var nextBtn = document.createElement('button');
     nextBtn.type = 'button';
     nextBtn.textContent = core.t('common.next');
-    nextBtn.setAttribute(
-      'style',
-      'padding:8px 18px;font-size:13px;font-weight:500;color:#fff;background:#6366f1;' +
-        'border:none;border-radius:6px;cursor:pointer;'
-    );
+    nextBtn.setAttribute('class', 'ak-button ak-button--info');
+    nextBtn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
     navRow.appendChild(nextBtn);
     step.appendChild(navRow);
 
@@ -228,9 +278,10 @@
   function buildStep2(wrap) {
     var step = document.createElement('div');
     step.setAttribute('data-page', 'step2');
+    step.setAttribute('class', 'ak-cut-tr ak-surface');
     step.setAttribute(
       'style',
-      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:10px;display:none;'
+      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:0;display:none;'
     );
 
     var label = document.createElement('div');
@@ -248,15 +299,14 @@
     var prevBtn = document.createElement('button');
     prevBtn.type = 'button';
     prevBtn.textContent = core.t('common.prev');
-    prevBtn.setAttribute(
-      'style',
-      'padding:8px 18px;font-size:13px;font-weight:500;color:var(--ark-text);background:transparent;' +
-        'border:1px solid var(--ark-border);border-radius:6px;cursor:pointer;'
-    );
+    prevBtn.setAttribute('class', 'ak-button ak-button--ghost');
+    prevBtn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
     prevBtn.addEventListener('click', function () {
       showPage(wrap, 'step1');
     });
     navRow.appendChild(prevBtn);
+
+    navRow.appendChild(makeCancelBtn(wrap));
 
     step.appendChild(navRow);
     wrap.appendChild(step);
@@ -279,11 +329,10 @@
         var name = b.nickName || core.t('common.unknown');
         var channel = b.channelName || '';
         btn.textContent = name + '（' + channel + '） UID:' + b.uid;
+        btn.setAttribute('class', 'ak-button ak-button--ghost');
         btn.setAttribute(
           'style',
-          'display:block;width:100%;text-align:left;margin-top:6px;padding:10px 12px;font-size:13px;' +
-            'color:var(--ark-text);background:var(--ark-fill-hover);border:1px solid var(--ark-border-weak);' +
-            'border-radius:6px;cursor:pointer;'
+          'display:block;width:100%;text-align:left;margin-top:6px;padding:10px 12px;font-size:13px;cursor:pointer;'
         );
         btn.addEventListener('click', function () {
           if (btn.disabled) return;
@@ -300,6 +349,13 @@
     var page = document.createElement('div');
     page.setAttribute('data-page', 'display');
     page.setAttribute('style', 'margin-top:20px;display:flex;flex-direction:column;');
+
+    var divider = document.createElement('div');
+    divider.setAttribute('class', 'ak-divider');
+    var dividerText = document.createElement('span');
+    dividerText.setAttribute('data-refresh-time', '1');
+    divider.appendChild(dividerText);
+    page.appendChild(divider);
 
     var content = document.createElement('div');
     content.setAttribute('data-display-content', '1');
@@ -335,11 +391,11 @@
       );
       avatarImg.onload = function () {
         avatarImg.style.opacity = '1';
-        var s = avatarBox.querySelector('.ark-spinner');
+        var s = avatarBox.querySelector('.ak-loading');
         if (s && s.parentNode) s.parentNode.remove();
       };
       avatarImg.onerror = function () {
-        var s = avatarBox.querySelector('.ark-spinner');
+        var s = avatarBox.querySelector('.ak-loading');
         if (s && s.parentNode) s.parentNode.remove();
       };
       avatarBox.appendChild(avatarImg);
@@ -350,7 +406,7 @@
         lvCircle.setAttribute(
           'style',
           'position:absolute;top:0;right:0;width:calc(var(--player-avatar) * 0.4375);height:calc(var(--player-avatar) * 0.4375);' +
-            'border:2px solid #ffd700;border-radius:50%;transform:translate(50%,-50%);' +
+            'border:2px solid var(--ak-color-yellow);border-radius:50%;transform:translate(50%,-50%);' +
             'background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;' +
             'font-size:calc(var(--player-avatar) * 0.1875);font-weight:600;color:#fff;'
         );
@@ -372,16 +428,16 @@
 
     if (status && status.registerTs) {
       var enrollRow = document.createElement('div');
-      enrollRow.setAttribute('style', 'display:flex;align-items:center;gap:6px;');
+      enrollRow.setAttribute('style', 'display:flex;align-items:center;gap:0;');
 
       var enrollLabel = document.createElement('span');
-      enrollLabel.setAttribute('style', 'font-size:11px;color:#000;background:#22bbff;padding:0 4px;');
+      enrollLabel.setAttribute('style', 'font-size:12px;font-weight:700;color:var(--ak-color-black);background:var(--ak-color-blue);padding:0 4px;');
       enrollLabel.textContent = core.t('home.enroll');
 
       var enrollDate = document.createElement('span');
       enrollDate.setAttribute(
         'style',
-        'font-size:11px;color:#000;background:#eeeeee;padding:0 4px;'
+        'font-size:12px;font-weight:700;color:var(--ak-color-black);background:var(--ak-color-white);padding:0 4px;'
       );
       enrollDate.textContent = formatRegisterTs(status.registerTs);
 
@@ -418,18 +474,13 @@
     var myCharsPlaceholder = makeSpinnerBox();
     leftCol.appendChild(myCharsPlaceholder);
 
-    var spacer = document.createElement('div');
-    spacer.setAttribute('class', 'ark-home-spacer');
-    spacer.setAttribute(
-      'style',
-      'flex:1;min-height:0;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);box-sizing:border-box;'
-    );
+    var spacer = assets.buildSpacer();
     leftCol.appendChild(spacer);
 
-    // 双列模式下，空白卡片高度低于 14px 时隐藏（背景透明），避免底部出现细线；
+    // 双列模式下，条纹空白卡片高度低于 14px 时隐藏，避免底部出现细线；
     // 单列模式由 styles.css 的 .ark-home-spacer 媒体查询直接 display:none
     function syncSpacer() {
-      spacer.style.background = spacer.offsetHeight < 14 ? 'transparent' : 'var(--ark-panel)';
+      spacer.style.opacity = spacer.offsetHeight < 14 ? '0' : '';
     }
 
     if (typeof ResizeObserver !== 'undefined') {
@@ -465,9 +516,9 @@
       'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
     );
     var spinner = document.createElement('div');
-    spinner.setAttribute('class', 'ark-spinner');
+    spinner.setAttribute('class', 'ak-loading');
     if (size) {
-      spinner.setAttribute('style', 'width:' + size + 'px;height:' + size + 'px;');
+      spinner.setAttribute('style', '--ak-loading-size:' + size + 'px;--ak-loading-border:3px;');
     }
     holder.appendChild(spinner);
     return holder;
@@ -477,7 +528,7 @@
     var holder = document.createElement('div');
     holder.setAttribute('class', 'ark-spinner-box');
     var spinner = document.createElement('div');
-    spinner.setAttribute('class', 'ark-spinner');
+    spinner.setAttribute('class', 'ak-loading');
     holder.appendChild(spinner);
     return holder;
   }
@@ -503,7 +554,7 @@
     if (old) old.remove();
     var err = document.createElement('div');
     err.setAttribute('data-step-error', '1');
-    err.setAttribute('style', 'margin-top:8px;font-size:12px;color:#f85149;');
+    err.setAttribute('style', 'margin-top:8px;font-size:12px;color:var(--ak-signal-danger);');
     err.textContent = msg;
     step.appendChild(err);
   }
@@ -521,7 +572,11 @@
       btn._origText = btn.textContent;
       btn.disabled = true;
       var sp = document.createElement('span');
-      sp.setAttribute('class', 'ark-btn-spinner');
+      sp.setAttribute('class', 'ak-loading');
+      sp.setAttribute(
+        'style',
+        'display:inline-block;vertical-align:middle;--ak-loading-size:14px;--ak-loading-border:3px;--ak-loading-color:currentColor;'
+      );
       btn.textContent = '';
       btn.appendChild(sp);
     } else {
@@ -607,6 +662,7 @@
           player: data
         }
       });
+      updateRefreshTime(wrap, { ts: Date.now() });
       showPage(wrap, 'display');
       renderDisplay(wrap, {
         uid: binding.uid,

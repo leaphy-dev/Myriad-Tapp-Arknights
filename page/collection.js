@@ -51,13 +51,11 @@
     back.type = 'button';
     back.textContent = core.t('common.back');
     back.setAttribute('data-nav', 'home');
-    back.setAttribute(
-      'style',
-      'padding:6px 14px;font-size:13px;color:var(--ark-text);background:transparent;' +
-        'border:1px solid var(--ark-border);border-radius:6px;cursor:pointer;'
-    );
+    back.setAttribute('class', 'ak-button ak-button--ghost');
+    back.setAttribute('style', 'padding:6px 14px;font-size:13px;cursor:pointer;');
 
     var title = document.createElement('h1');
+    title.setAttribute('class', 'ark-page-title');
     title.setAttribute('style', 'font-size:18px;font-weight:600;margin:0;color:var(--ark-text);');
     title.textContent = core.t('collection.title');
 
@@ -149,34 +147,55 @@
   }
 
   function makeTabText(label) {
-    var span = document.createElement('span');
-    span.textContent = label;
-    span.setAttribute('style', 'cursor:pointer;color:var(--ark-text);font-size:15px;font-weight:600;user-select:none;');
-    return span;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = label;
+    btn.setAttribute(
+      'style',
+      'cursor:pointer;color:var(--ark-text);font-family:var(--ak-font-mono);font-size:13px;font-weight:800;' +
+        'letter-spacing:0.08em;text-transform:uppercase;user-select:none;background:transparent;border:none;padding:0;'
+    );
+    return btn;
   }
 
   function buildFilterTool(assets, filterState, onChange) {
     var container = document.createElement('div');
     container.setAttribute('style', 'position:relative;margin-bottom:12px;z-index:50;');
 
-    var toggle = document.createElement('div');
-    toggle.setAttribute('style', 'cursor:pointer;color:var(--ark-text);font-size:14px;padding:6px 0;user-select:none;text-align:center;');
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'ark-filter-panel');
+    toggle.setAttribute(
+      'style',
+      'cursor:pointer;color:var(--ark-text);font-family:var(--ak-font-mono);font-size:13px;letter-spacing:0.08em;' +
+        'text-transform:uppercase;padding:6px 0;user-select:none;text-align:center;background:transparent;border:none;'
+    );
     toggle.textContent = core.t('collection.filter') + ' ▾';
     container.appendChild(toggle);
 
     var panel = document.createElement('div');
+    panel.setAttribute('id', 'ark-filter-panel');
+    panel.setAttribute('class', 'ak-cut-tr ak-surface');
     panel.setAttribute(
       'style',
-      'position:absolute;top:100%;left:0;width:100%;background:var(--ark-panel-2);border:1px solid var(--ark-border-weak);' +
+      'position:absolute;top:100%;left:0;width:100%;background:var(--ak-surface-panel);border:1px solid var(--ark-border-weak);' +
         'padding:14px;box-sizing:border-box;opacity:0;transform:translateY(-8px);visibility:hidden;' +
         'transition:opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;'
     );
 
     function sectionTitle(text) {
       var t = document.createElement('div');
-      t.setAttribute('style', 'font-size:12px;color:var(--ark-text);margin-bottom:8px;text-align:center;');
+      t.setAttribute('class', 'ak-label-mono');
+      t.setAttribute('style', 'font-size:11px;color:var(--ak-text-secondary);margin-bottom:8px;text-align:center;');
       t.textContent = text;
       return t;
+    }
+
+    function setChipOn(chip, on) {
+      chip.style.opacity = on ? '1' : '0.55';
+      chip.style.borderColor = on ? 'var(--ak-signal-accent)' : 'var(--ark-border)';
+      chip.style.boxShadow = on ? 'inset 0 -2px 0 var(--ak-signal-accent)' : 'none';
     }
 
     panel.appendChild(sectionTitle(core.t('collection.profession')));
@@ -184,18 +203,25 @@
     profRow.setAttribute('style', 'display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;justify-content:center;');
     for (var p = 0; p < PROFESSIONS.length; p++) {
       (function (key) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', core.t('collection.professions.' + key));
+        btn.setAttribute('style', 'width:44px;height:44px;cursor:pointer;padding:4px;box-sizing:border-box;background:transparent;border:none;opacity:0.4;');
         var icon = document.createElement('img');
         icon.src = assets.professionUrl(key);
         icon.alt = '';
-        icon.setAttribute('style', 'width:44px;height:44px;cursor:pointer;padding:4px;box-sizing:border-box;opacity:0.4;');
-        icon.addEventListener('click', function () {
+        icon.setAttribute('style', 'width:100%;height:100%;object-fit:contain;display:block;');
+        btn.appendChild(icon);
+        btn.addEventListener('click', function () {
           var i = filterState.professions.indexOf(key);
           var on = i === -1;
           if (on) filterState.professions.push(key); else filterState.professions.splice(i, 1);
-          icon.style.opacity = on ? '1' : '0.4';
+          btn.style.opacity = on ? '1' : '0.4';
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
           onChange();
         });
-        profRow.appendChild(icon);
+        profRow.appendChild(btn);
       })(PROFESSIONS[p]);
     }
     panel.appendChild(profRow);
@@ -205,14 +231,20 @@
     rarityRow.setAttribute('style', 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;justify-content:center;');
     for (var r = 0; r < RARITY_OPTIONS.length; r++) {
       (function (opt) {
-        var chip = document.createElement('div');
+        var chip = document.createElement('button');
+        chip.type = 'button';
         chip.textContent = core.t(opt.labelKey);
-        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:var(--ark-text);cursor:pointer;border:1px solid var(--ark-border);user-select:none;opacity:0.5;');
+        chip.setAttribute(
+          'style',
+          'display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:5px 14px;font-size:11px;' +
+            'font-family:var(--ak-font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--ark-text);cursor:pointer;' +
+            'border:1px solid var(--ark-border);background:transparent;user-select:none;opacity:0.55;'
+        );
         chip.addEventListener('click', function () {
           var i = filterState.rarities.indexOf(opt.key);
           var on = i === -1;
           if (on) filterState.rarities.push(opt.key); else filterState.rarities.splice(i, 1);
-          chip.style.opacity = on ? '1' : '0.5';
+          setChipOn(chip, on);
           onChange();
         });
         rarityRow.appendChild(chip);
@@ -226,9 +258,15 @@
     var sortChips = [];
     for (var s = 0; s < SORT_OPTIONS.length; s++) {
       (function (opt) {
-        var chip = document.createElement('div');
+        var chip = document.createElement('button');
+        chip.type = 'button';
         chip.textContent = core.t(opt.labelKey);
-        chip.setAttribute('style', 'padding:4px 14px;font-size:12px;color:var(--ark-text);cursor:pointer;border:1px solid var(--ark-border);user-select:none;opacity:0.5;');
+        chip.setAttribute(
+          'style',
+          'display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:5px 14px;font-size:11px;' +
+            'font-family:var(--ak-font-mono);letter-spacing:0.08em;text-transform:uppercase;color:var(--ark-text);cursor:pointer;' +
+            'border:1px solid var(--ark-border);background:transparent;user-select:none;opacity:0.55;'
+        );
         chip.addEventListener('click', function () {
           filterState.sortBy = (filterState.sortBy === opt.key) ? 'rarity' : opt.key;
           refreshSort();
@@ -240,7 +278,7 @@
     }
     function refreshSort() {
       for (var c = 0; c < sortChips.length; c++) {
-        sortChips[c].style.opacity = (SORT_OPTIONS[c].key === filterState.sortBy) ? '1' : '0.5';
+        setChipOn(sortChips[c], SORT_OPTIONS[c].key === filterState.sortBy);
       }
     }
     panel.appendChild(sortRow);
@@ -259,6 +297,7 @@
         panel.style.transform = 'translateY(-8px)';
         panel.style.visibility = 'hidden';
       }
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       toggle.textContent = isOpen ? (core.t('collection.filter') + ' ▴') : (core.t('collection.filter') + ' ▾');
     });
 
@@ -342,7 +381,7 @@
     panel.setAttribute(
       'style',
       'padding:32px;text-align:center;font-size:13px;color:var(--ark-text-dim);' +
-        'border:1px dashed var(--ark-border-weak);border-radius:8px;'
+        'border:1px dashed var(--ark-border-weak);border-radius:var(--ak-radius-subtle);'
     );
     panel.textContent = core.t('collection.skinTodoPrefix') + Object.keys(skinInfoMap || {}).length + core.t('collection.skinTodoSuffix');
     return panel;

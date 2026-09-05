@@ -5,10 +5,13 @@
     "back": "← Back",
     "next": "Next",
     "prev": "Previous",
+    "cancel": "Cancel",
     "unknown": "Unknown"
   },
   "home": {
     "refresh": "Refresh",
+    "refreshTime": "UPDATED",
+    "loading": "Loading",
     "enroll": "Enlisted",
     "loadFail": "Failed to load assets",
     "errorModule": "skland module not loaded",
@@ -37,6 +40,16 @@
     "rarity5": "5★",
     "rarity4": "4★",
     "rarity13": "1-3★",
+    "professions": {
+      "pioneer": "Pioneer",
+      "warrior": "Warrior",
+      "tank": "Tank",
+      "sniper": "Sniper",
+      "caster": "Caster",
+      "medic": "Medic",
+      "support": "Supporter",
+      "special": "Specialist"
+    },
     "sortLevel": "Level",
     "sortSkill": "Skill mastery",
     "sortGain": "Obtained",

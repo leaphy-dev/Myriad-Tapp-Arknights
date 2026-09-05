@@ -6,12 +6,24 @@
 
 (function () {
   var core = require('../core.js');
-  var lastKey = '';
+  var cache = {
+    propsKey: '',
+    dataKey: '',
+    html: ''
+  };
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+  }
+
+  function formatDate(ts) {
+    var d = new Date(Number(ts) * 1000);
+    if (isNaN(d.getTime())) return '';
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
   }
 
   function buildGlow(color) {
@@ -25,16 +37,23 @@
     return '<div style="position:absolute;inset:0;border:2px dashed #60a5fa;border-radius:12px;pointer-events:none;"></div>';
   }
 
-  function buildAvatar(c, scale, sizePx, src) {
+  function buildAvatar(c, scale, sizePx, src, eliteSrc) {
     var html =
-      '<div style="position:relative;width:' + sizePx + 'px;height:' + sizePx + 'px;flex-shrink:0;' +
-      'border-radius:8px;overflow:hidden;background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
-      'display:flex;align-items:center;justify-content:center;">' +
+      '<div style="position:relative;width:' + sizePx + 'px;height:' + sizePx + 'px;flex-shrink:0;">' +
+      '<div style="position:absolute;inset:0;border-radius:8px;overflow:hidden;background:' + c.cellBg + ';' +
+      'border:1px solid ' + c.cellBorder + ';display:flex;align-items:center;justify-content:center;">' +
       '<span style="font-size:' + Math.round(sizePx * 0.45) + 'px;"> </span>';
     if (src) {
       html +=
         '<img referrerpolicy="no-referrer" src="' + esc(src) + '" alt="" ' +
         'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000;" />';
+    }
+    html += '</div>';
+    if (eliteSrc) {
+      html +=
+        '<img referrerpolicy="no-referrer" src="' + esc(eliteSrc) + '" alt="" ' +
+        'style="position:absolute;top:-2px;right:-2px;width:' + Math.round(sizePx * 0.32) + 'px;height:' +
+        Math.round(sizePx * 0.32) + 'px;pointer-events:none;" />';
     }
     html += '</div>';
     return html;
@@ -47,12 +66,22 @@
       '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
       '<div style="font-size:' + Math.round((big ? 17 : 15) * fontScale) + 'px;font-weight:700;color:' + c.textMain + ';' +
       'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(summary.name || '—') + '</div>';
-    if (summary.level) {
+    if (summary.level || summary.registerTs) {
       html +=
-        '<span style="display:inline-block;align-self:flex-start;padding:1px 8px;border-radius:999px;' +
-        'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
-        'font-size:' + Math.round(11 * fontScale) + 'px;font-weight:700;color:' + c.textDim + ';">' +
-        esc(summary.level) + '</span>';
+        '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:' + Math.round(6 * scale) + 'px;">';
+      if (summary.level) {
+        html +=
+          '<span style="display:inline-block;padding:1px 8px;border-radius:999px;' +
+          'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
+          'font-size:' + Math.round(11 * fontScale) + 'px;font-weight:700;color:' + c.textDim + ';">' +
+          esc('Lv.' + summary.level) + '</span>';
+      }
+      if (summary.registerTs) {
+        html +=
+          '<span style="font-size:' + Math.round(10 * fontScale) + 'px;color:' + c.textDim + ';letter-spacing:0.4px;">' +
+          esc(formatDate(summary.registerTs)) + '</span>';
+      }
+      html += '</div>';
     }
     html += '</div></div>';
     return html;
@@ -61,6 +90,7 @@
   function buildStats(c, scale, fontScale, summary) {
     var html = '<div style="display:flex;gap:' + Math.round(6 * scale) + 'px;">';
     for (var i = 0; i < summary.items.length; i++) {
+      if (summary.items[i][0] === 'assets.furniture') continue;
       html +=
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;' +
         'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';border-radius:8px;' +
@@ -86,7 +116,7 @@
       var u = units[i];
       html +=
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;">' +
-        buildAvatar(c, scale, Math.round(64 * scale), u.avatarUrl) +
+        buildAvatar(c, scale, Math.round(64 * scale), u.avatarUrl, u.eliteUrl) +
         '<span style="font-size:' + Math.round(11 * fontScale) + 'px;font-weight:600;color:' + c.textMain + ';' +
         'max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(u.name) + '</span>' +
         '<span style="font-size:' + Math.round(10 * fontScale) + 'px;color:' + c.textMuted + ';">' +
@@ -198,9 +228,24 @@
       cellBg: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.6)'
     };
 
-    // 首帧同步渲染占位壳：容器为空时先铺结构与占位数据，避免异步加载期间整卡全白
+    var propsKey = [
+      size,
+      theme,
+      String(scale),
+      String(fontScale),
+      primary,
+      props.isEditMode ? 'edit' : 'view'
+    ].join('|');
+
+    // 首帧同步渲染：容器为空时优先复用上次已渲染的真实数据 HTML，
+    // 避免 refreshOnVisible 重建容器时先闪现“占位壳”；仅首次真正无缓存时才用占位壳
     if (!container.firstChild) {
-      container.innerHTML = buildShell(c, primary, scale, fontScale, size, props);
+      if (cache.html && cache.propsKey === propsKey) {
+        container.innerHTML = cache.html;
+        bindImgFallback(container);
+      } else {
+        container.innerHTML = buildShell(c, primary, scale, fontScale, size, props);
+      }
     }
 
     return (async function () {
@@ -209,31 +254,31 @@
         data = await Tapp.shared.get(core.PLAYER_DATA_KEY);
       } catch (e) {}
 
-      // 幂等渲染：尺寸 / 主题 / 缩放 / 数据版本未变化时跳过重建，避免卡片闪烁
-      var key = [
-        size,
-        theme,
-        String(scale),
-        String(fontScale),
-        primary,
-        props.isEditMode ? 'edit' : 'view',
-        data && data.data ? String(data.ts || 'no-ts') : 'empty'
-      ].join('|');
-      if (key === lastKey) return;
-      lastKey = key;
+      var dataKey = data && data.data ? String(data.ts || 'no-ts') : 'empty';
 
-      if (!data || !data.data) {
-        container.innerHTML = buildEmpty(c, primary, scale, fontScale);
+      // 数据未变化且容器已显示对应内容时跳过重建
+      if (cache.html && cache.propsKey === propsKey && cache.dataKey === dataKey) {
+        if (!container.firstChild) {
+          container.innerHTML = cache.html;
+          bindImgFallback(container);
+        }
         return;
       }
 
-      var summary = core.getPlayerSummary(data.data);
-      var assist = size === '4x4' ? await core.getAssistUnits(data.data) : [];
+      cache.propsKey = propsKey;
+      cache.dataKey = dataKey;
 
-      container.innerHTML = size === '4x4'
-        ? buildLarge(c, primary, scale, fontScale, summary, assist, props)
-        : buildWide(c, primary, scale, fontScale, summary, props);
+      if (!data || !data.data) {
+        cache.html = buildEmpty(c, primary, scale, fontScale);
+      } else {
+        var summary = core.getPlayerSummary(data.data);
+        var assist = size === '4x4' ? await core.getAssistUnits(data.data) : [];
+        cache.html = size === '4x4'
+          ? buildLarge(c, primary, scale, fontScale, summary, assist, props)
+          : buildWide(c, primary, scale, fontScale, summary, props);
+      }
 
+      container.innerHTML = cache.html;
       bindImgFallback(container);
     })();
   }

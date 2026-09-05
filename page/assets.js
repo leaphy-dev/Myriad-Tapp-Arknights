@@ -17,6 +17,16 @@
   var RARITY_CLASSES = ['one-star', 'two-star', 'three-star', 'four-star', 'five-star', 'six-star'];
   var RARITY_BG_KEYS = ['2-0', 'r3', 'r4', 'r5'];
 
+  function makeCardTitle(text) {
+    var el = document.createElement('span');
+    el.setAttribute('class', 'ak-card__title');
+    var sq = document.createElement('span');
+    sq.setAttribute('style', 'width:8px;height:8px;background:var(--ak-color-blue);flex-shrink:0;box-sizing:border-box;');
+    el.appendChild(sq);
+    el.appendChild(document.createTextNode(text));
+    return el;
+  }
+
   function decodeBase64(b64) {
     if (typeof Buffer !== 'undefined') {
       return Buffer.from(b64, 'base64').toString('utf8').replace(/^\uFEFF/, '');
@@ -139,11 +149,22 @@
     return (info && info.name) || charId;
   }
 
+  function placeColor(rarity) {
+    if (rarity >= 5) return 'var(--ak-color-advanced)';
+    if (rarity >= 4) return 'var(--ak-color-yellow)';
+    return 'white';
+  }
+
   function buildOperatorAvatar(op) {
+    var info = _charInfoMap && _charInfoMap[op.id];
+    var rarity = info && info.rarity != null ? info.rarity : 0;
+
     var wrap = document.createElement('div');
+    wrap.setAttribute('class', 'ak-card ak-card--place');
     wrap.setAttribute(
       'style',
-      'width:var(--assist-avatar);height:var(--assist-avatar);overflow:hidden;position:relative;'
+      'width:var(--assist-avatar);height:var(--assist-avatar);overflow:hidden;position:relative;' +
+        'box-sizing:border-box;--ak-card-place-color:' + placeColor(rarity) + ';'
     );
 
     var img = document.createElement('img');
@@ -161,8 +182,8 @@
       'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
     );
     var spinnerEl = document.createElement('div');
-    spinnerEl.setAttribute('class', 'ark-spinner');
-    spinnerEl.setAttribute('style', 'width:calc(var(--assist-avatar) * 0.3);height:calc(var(--assist-avatar) * 0.3);');
+    spinnerEl.setAttribute('class', 'ak-loading');
+    spinnerEl.setAttribute('style', 'width:calc(var(--assist-avatar) * 0.3);height:calc(var(--assist-avatar) * 0.3);--ak-loading-border:3px;');
     spinner.appendChild(spinnerEl);
 
     img.onload = function () {
@@ -196,7 +217,7 @@
         'align-items:center;line-height:1;pointer-events:none;'
     );
     var lvLabel = document.createElement('span');
-    lvLabel.setAttribute('style', 'font-size:calc(var(--assist-avatar) * 0.1);color:#fff;opacity:0.85;letter-spacing:0.5px;');
+    lvLabel.setAttribute('style', 'font-family:var(--ak-font-mono);font-size:calc(var(--assist-avatar) * 0.1);color:#fff;opacity:0.85;letter-spacing:0.08em;');
     lvLabel.textContent = 'LV';
     var lvNum = document.createElement('span');
     lvNum.setAttribute(
@@ -218,24 +239,16 @@
     var list = Array.isArray(assistList) ? assistList.slice(0, 3) : [];
 
     var wrap = document.createElement('div');
-    // wrap.setAttribute(
-    //   'style',
-    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
-    //     'width:100%;box-sizing:border-box;min-width:0;'
-    // );
-
+    wrap.setAttribute('class', 'ak-card');
     wrap.setAttribute(
       'style',
-      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
-        'width:100%;box-sizing:border-box;min-width:0;'
+      'width:100%;box-sizing:border-box;min-width:0;'
     );
 
     var header = document.createElement('div');
-    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;');
+    header.setAttribute('class', 'ak-card__header');
 
-    var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
-    zh.textContent = core.t('assets.supportUnits');
+    var zh = makeCardTitle(core.t('assets.supportUnits'));
 
     var en = document.createElement('span');
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
@@ -301,27 +314,20 @@
     list = list.slice(0, 10);
 
     var wrap = document.createElement('div');
-    // wrap.setAttribute(
-    //   'style',
-    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
-    //     'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
-    // );
-
+    wrap.setAttribute('class', 'ak-card');
     wrap.setAttribute(
       'style',
-      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128, 128, 128, 0);' +
-        'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
+      'max-width:100%;box-sizing:border-box;min-width:0;overflow:hidden;'
     );
 
     var header = document.createElement('div');
-    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;');
+    header.setAttribute('class', 'ak-card__header');
+    header.setAttribute('style', 'align-items:center;');
 
     var left = document.createElement('div');
     left.setAttribute('style', 'display:flex;align-items:baseline;gap:8px;');
 
-    var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
-    zh.textContent = core.t('assets.myOperators');
+    var zh = makeCardTitle(core.t('assets.myOperators'));
 
     var en = document.createElement('span');
     en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
@@ -421,8 +427,8 @@
       'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
     );
     var spinnerEl = document.createElement('div');
-    spinnerEl.setAttribute('class', 'ark-spinner');
-    spinnerEl.setAttribute('style', 'width:calc(var(--char-card-w) * 0.16);height:calc(var(--char-card-w) * 0.16);');
+    spinnerEl.setAttribute('class', 'ak-loading');
+    spinnerEl.setAttribute('style', 'width:calc(var(--char-card-w) * 0.16);height:calc(var(--char-card-w) * 0.16);--ak-loading-border:3px;');
     spinner.appendChild(spinnerEl);
 
     illusImg.onload = function () {
@@ -554,17 +560,11 @@
     var summary = core.getPlayerSummary({ player: player });
 
     var wrap = document.createElement('div');
-    // wrap.setAttribute(
-    //   'style',
-    //   'display:flex;gap:8px;margin-top:12px;padding:12px;background:var(--ark-panel);' +
-    //     'border:1px solid var(--ark-border-weak);width:100%;box-sizing:border-box;min-width:0;'
-    // );
-
     wrap.setAttribute(
       'style',
-      'display:flex;gap:8px;padding:12px;background:var(--ark-panel);' +
-        'border:1px solid var(--ark-border-weak);width:100%;box-sizing:border-box;min-width:0;'
+      'display:flex;gap:8px;width:100%;box-sizing:border-box;min-width:0;'
     );    
+    wrap.setAttribute('class', 'ak-card');
 
     var rows = summary.items;
 
@@ -572,7 +572,11 @@
       var cell = document.createElement('div');
       cell.setAttribute('style', 'flex:1;min-width:0;text-align:center;');
       var lab = document.createElement('div');
-      lab.setAttribute('style', 'font-size:9px;color:var(--ark-text-dim);white-space:nowrap;');
+      lab.setAttribute(
+        'style',
+        'font-family:var(--ak-font-mono);font-size:9px;letter-spacing:0.05em;text-transform:uppercase;' +
+          'color:var(--ak-text-secondary);white-space:nowrap;'
+      );
       lab.textContent = core.t(rows[i][0]);
       var val = document.createElement('div');
       val.setAttribute(
@@ -591,28 +595,20 @@
 
   function buildGameDataCard(player) {
     var wrap = document.createElement('div');
-    wrap.setAttribute('class', 'ark-game-data');
-    // wrap.setAttribute(
-    //   'style',
-    //   'margin-top:12px;padding:12px;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);' +
-    //     'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
-    // );
-
+    wrap.setAttribute('class', 'ark-game-data ak-card');
     wrap.setAttribute(
       'style',
-      'padding:12px;background:var(--ark-panel);border:1px solid rgba(128,128,128,0);' +
-        'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
+      'width:100%;box-sizing:border-box;min-width:0;display:flex;flex-direction:column;overflow:hidden;'
     );
 
     var header = document.createElement('div');
-    header.setAttribute('style', 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-shrink:0;');
+    header.setAttribute('class', 'ak-card__header');
+    header.setAttribute('style', 'flex-shrink:0;');
 
-    var zh = document.createElement('span');
-    zh.setAttribute('style', 'font-size:12px;font-weight:600;color:var(--ark-text);');
-    zh.textContent = core.t('assets.gameData');
+    var zh = makeCardTitle(core.t('assets.gameData'));
 
     var en = document.createElement('span');
-    en.setAttribute('style', 'font-size:9px;letter-spacing:0.5px;color:var(--ark-text-dim);');
+    en.setAttribute('style', 'font-family:var(--ak-font-mono);font-size:9px;letter-spacing:0.08em;color:var(--ak-text-secondary);');
     en.textContent = '// GAME DATA';
 
     header.appendChild(zh);
@@ -690,8 +686,9 @@
         tab.textContent = label;
         tab.setAttribute(
           'style',
-          'flex-shrink:0;padding:0 16px;height:32px;line-height:32px;font-size:12px;color:var(--ark-text-muted);' +
-            'background:var(--ark-fill);border:1px solid var(--ark-border-weak);border-radius:0;cursor:pointer;'
+          'flex-shrink:0;padding:0 16px;height:32px;line-height:32px;font-family:var(--ak-font-mono);' +
+            'font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ark-text-muted);' +
+            'background:var(--ark-fill);border:1px solid var(--ark-border-weak);border-radius:var(--ak-radius-subtle);cursor:pointer;'
         );
         tab.addEventListener('click', function () {
           contentBox.innerHTML = '';
@@ -735,7 +732,7 @@
       'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;'
     );
     var spinner = document.createElement('div');
-    spinner.setAttribute('class', 'ark-spinner');
+    spinner.setAttribute('class', 'ak-loading');
     holder.appendChild(spinner);
     return holder;
   }
@@ -890,6 +887,13 @@
     if (!shown) contentBox.textContent = core.t('assets.noTower');
   }
 
+  function buildSpacer() {
+    var el = document.createElement('div');
+    el.setAttribute('class', 'ark-home-spacer ak-card ak-card--stripe');
+    el.setAttribute('style', 'flex:1;min-height:0;box-sizing:border-box;');
+    return el;
+  }
+
   window.__arkAssets = {
     loadAssets: loadAssets,
     setCharInfoMap: setCharInfoMap,
@@ -899,6 +903,7 @@
     buildCharCard: buildCharCard,
     buildPlayerInfoCard: buildPlayerInfoCard,
     buildGameDataCard: buildGameDataCard,
+    buildSpacer: buildSpacer,
     operatorName: operatorName,
     charInfoMap: function () { return _charInfoMap; },
     professionUrl: function (key) { return _professionUrls[key] || ''; },

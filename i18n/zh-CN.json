@@ -5,10 +5,13 @@
     "back": "← 返回",
     "next": "下一步",
     "prev": "上一步",
+    "cancel": "取消",
     "unknown": "未知"
   },
   "home": {
     "refresh": "刷新数据",
+    "refreshTime": "更新于",
+    "loading": "加载中",
     "enroll": "入职日",
     "loadFail": "资源加载失败",
     "errorModule": "skland 模块未加载",
@@ -37,6 +40,16 @@
     "rarity5": "5星",
     "rarity4": "4星",
     "rarity13": "1-3星",
+    "professions": {
+      "pioneer": "先锋",
+      "warrior": "近卫",
+      "tank": "重装",
+      "sniper": "狙击",
+      "caster": "术师",
+      "medic": "医疗",
+      "support": "辅助",
+      "special": "特种"
+    },
     "sortLevel": "角色等级",
     "sortSkill": "技能专精",
     "sortGain": "获取时间",

@@ -44,7 +44,8 @@
     "widget:register"
   ],
   "assets": [
-    "assets/page_mask.png",
+    "assets/decoration/decorator_dark.png",
+    "assets/decoration/page_mask_dark.png",
     "assets/rank/elite0.png",
     "assets/rank/elite1.png",
     "assets/rank/elite2.png",

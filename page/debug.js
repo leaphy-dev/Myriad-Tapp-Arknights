@@ -53,7 +53,8 @@
     var summary = document.createElement('div');
     summary.setAttribute(
       'style',
-      'background:#14181d;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
+      'background:var(--ak-surface-inverse);border:1px solid rgba(255,255,255,0.14);' +
+        'border-radius:var(--ak-radius-subtle);padding:10px;margin-top:8px;'
     );
     renderSummaryRow(summary, 'Request URL', 'https://zonai.skland.com' + endpointPath(endpoint));
     renderSummaryRow(summary, 'Method', 'GET');
@@ -91,11 +92,11 @@
     row.setAttribute('style', 'display:flex;gap:8px;margin-top:4px;');
 
     var lab = document.createElement('span');
-    lab.setAttribute('style', 'color:#8b95a1;min-width:90px;font-size:11px;');
+    lab.setAttribute('style', 'color:var(--ak-text-secondary);min-width:90px;font-size:11px;');
     lab.textContent = label;
 
     var val = document.createElement('span');
-    val.setAttribute('style', 'color:#e0e0e0;font-size:12px;word-break:break-all;');
+    val.setAttribute('style', 'color:var(--ak-text-inverse);font-size:12px;word-break:break-all;');
     val.textContent = value;
 
     row.appendChild(lab);
@@ -107,12 +108,13 @@
     var block = document.createElement('div');
     block.setAttribute(
       'style',
-      'background:#0d1117;border:1px solid #2c333a;border-radius:4px;padding:10px;margin-top:8px;'
+      'background:var(--ak-surface-inverse);border:1px solid rgba(255,255,255,0.14);' +
+        'border-radius:var(--ak-radius-subtle);padding:10px;margin-top:8px;'
     );
 
     var hasCode = res && res.code !== undefined && res.code !== null;
     var code = hasCode ? res.code : '?';
-    var color = code === 0 || code === 200 ? '#3fb950' : code === -1 ? '#f85149' : '#d29922';
+    var color = code === 0 || code === 200 ? 'var(--ak-signal-success)' : code === -1 ? 'var(--ak-signal-danger)' : 'var(--ak-signal-action)';
     var codeLine = document.createElement('div');
     codeLine.setAttribute('style', 'font-size:12px;color:' + color + ';margin-bottom:6px;');
     codeLine.textContent = 'code: ' + code + (res && res.msg ? ' — ' + res.msg : '');
@@ -121,7 +123,7 @@
     var pre = document.createElement('pre');
     pre.setAttribute(
       'style',
-      'margin:0;white-space:pre-wrap;word-break:break-all;color:#e0e0e0;font-size:12px;max-height:360px;overflow:auto;'
+      'margin:0;white-space:pre-wrap;word-break:break-all;color:var(--ak-text-inverse);font-size:12px;max-height:360px;overflow:auto;'
     );
     pre.textContent = JSON.stringify(res, null, 2);
     block.appendChild(pre);

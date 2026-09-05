@@ -9,20 +9,17 @@
   --ark-text-dim: rgba(0, 0, 0, 0.55);
   --ark-text-muted: #3a3a3a;
   --ark-panel: rgba(255, 255, 255, 0.55);
-  --ark-panel-2: rgba(250, 250, 250, 0.55);
   --ark-border: rgba(0, 0, 0, 0.22);
   --ark-border-strong: rgba(0, 0, 0, 0.35);
   --ark-border-weak: rgba(0, 0, 0, 0.12);
   --ark-fill: rgba(0, 0, 0, 0.05);
   --ark-fill-hover: rgba(0, 0, 0, 0.08);
-  --ark-spinner-track: rgba(0, 0, 0, 0.15);
 
   /* 响应式尺寸：clamp 随视口流畅缩放，媒体查询做断点覆盖 */
   --char-card-w: clamp(84px, 9vw, 120px);   /* 干员卡片宽 */
   --char-card-h: calc(var(--char-card-w) * 2.35); /* 卡片高 = 立绘(1:2) + 底部名字区 */
   --assist-avatar: clamp(84px, 9vw, 100px); /* 助战头像 */
   --player-avatar: clamp(56px, 6vw, 64px);  /* 玩家头像 */
-  --left-col-w: clamp(300px, 32vw, 460px);  /* 宽屏左列宽 */
 }
 
 html.dark {
@@ -36,30 +33,20 @@ html.dark {
   --ark-text-dim: rgba(255, 255, 255, 0.5);
   --ark-text-muted: #e0e0e0;
   --ark-panel: rgba(49, 49, 49, 0.7);
-  --ark-panel-2: rgba(26, 26, 26, 0.7);
   --ark-border: rgba(255, 255, 255, 0.35);
   --ark-border-strong: rgba(255, 255, 255, 0.3);
   --ark-border-weak: rgba(255, 255, 255, 0.12);
   --ark-fill: rgba(255, 255, 255, 0.08);
   --ark-fill-hover: rgba(255, 255, 255, 0.05);
-  --ark-spinner-track: rgba(255, 255, 255, 0.18);
 }
 
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-}
-
-body {
-  font: 14px/1.6 system-ui, sans-serif;
-  background: transparent;
-  color: inherit;
-}
-
+/* 页面根：host 外壳注入的片段根节点（page.template 片段）。
+   样式只作用于自身，不触碰宿主 html/body 外壳（PAGE.md 规范）。 */
 .page {
   box-sizing: border-box;
   min-height: 100vh;
+  font: 14px/1.6 system-ui, sans-serif;
+  color: inherit;
 }
 
 [hidden] {
@@ -76,10 +63,15 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--ark-bg);
-  background-image: var(--page-mask, none);
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
+}
+
+/* 装饰纹样与页面遮罩均仅用于暗色模式（decoration/decorator_dark.png、page_mask_dark.png） */
+html.dark .home-view,
+html.dark .collection-view {
+  background-image: var(--page-mask, none), var(--page-decorator, none);
+  background-size: cover, auto;
+  background-repeat: no-repeat, repeat;
+  background-position: center, 0 0;
 }
 
 @media (min-width: 640px) {
@@ -115,7 +107,7 @@ body {
   line-height: 2;
 }
 
-/* 暗色模式：灰色点网格背景（已弃用，改用 assets/page_mask.png 资源）
+/* 暗色模式：灰色点网格背景（已弃用，改用 assets/decoration/page_mask_dark.png 资源）
 html.dark .home-view,
 html.dark .collection-view {
   background-image: radial-gradient(circle, rgba(255, 255, 255, 0.2) 1.5px, transparent 1.5px);
@@ -130,89 +122,177 @@ html.dark .collection-view {
   }
 }
 
-.ark-home-inner {
-  display: flex;
-  flex-direction: column;
+/* ak-ui fx：倾斜效果（vendored 自 @yunyoujun/ak-ui _ak-fx） */
+.ak-fx--skew-left {
+  transform: skewX(-10deg);
+}
+
+.ak-fx--skew-right {
+  transform: skewX(10deg);
+}
+
+/* ak-ui button（vendored/adapted 自 @yunyoujun/ak-ui _ak-button） */
+[data-ak-ui] .ak-button {
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 24px;
-}
-
-.ark-debug-btn {
-  padding: 6px 16px;
-  font: inherit;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--ark-gold);
-  background: transparent;
-  border: 1px solid var(--ark-gold-dim);
-  border-radius: 999px;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: var(--ak-font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  outline: none;
+  padding: 0;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.2s ease;
+  color: #fff;
+  background-color: rgba(49, 49, 49, 0.95);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2), 0 5px 10px rgba(0, 0, 0, 0.5);
 }
 
-.ark-debug-btn:hover {
-  opacity: 1;
+[data-ak-ui] .ak-button:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
 
-.ark-refresh-btn {
-  transition: border-color 0.2s ease;
+[data-ak-ui] .ak-button:active:not(:disabled) {
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
-.ark-refresh-btn:hover {
-  border-color: var(--ark-gold);
+[data-ak-ui] .ak-button__icon {
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  fill: currentColor;
 }
 
-.ark-refresh-btn svg {
-  transition: transform 0.3s ease;
+[data-ak-ui] .ak-button--fab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 4rem;
+  height: 3.5rem;
+  background-color: rgba(49, 49, 49, 0.6);
+  box-shadow: 0 8px 10px rgba(0, 0, 0, 0.8);
 }
 
-.ark-refresh-btn:hover svg {
-  transform: rotate(90deg);
+[data-ak-ui] .ak-button--fab:active {
+  background-color: rgba(49, 49, 49, 0.5);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
 }
 
-.ark-title {
-  margin: 0;
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 600;
-  letter-spacing: 0.35em;
-  text-indent: 0.35em;
+[data-ak-ui] .ak-button--fab .ak-button__icon {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+/* 项目命令按钮变体（在 vendored .ak-button 之上扩展） */
+[data-ak-ui] .ak-button--info {
+  background-color: var(--ak-signal-info);
+  color: var(--ak-surface-inverse);
+}
+
+[data-ak-ui] .ak-button--success {
+  background-color: var(--ak-signal-success);
+  color: var(--ak-surface-inverse);
+}
+
+[data-ak-ui] .ak-button--ghost {
+  background-color: transparent;
+  color: var(--ak-text-primary);
+  border: var(--ak-line-hairline) solid var(--ark-border-strong);
+  box-shadow: none;
+}
+
+[data-ak-ui] .ak-button--ghost:hover:not(:disabled) {
+  background-color: var(--ark-fill-hover);
+}
+
+/* ak-ui divider：标题下方的分割线 + 刷新时间（vendored/adapted 自 @yunyoujun/ak-ui _ak-divider） */
+.ak-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0 1.25rem;
+}
+
+.ak-divider::before,
+.ak-divider::after {
+  content: "";
+  height: 2px;
+  background: var(--ak-text-secondary);
+  opacity: 0.45;
+}
+
+.ak-divider::before {
+  width: 15%;
+}
+
+.ak-divider::after {
+  flex: 1;
+}
+
+.ak-divider span {
+  flex-shrink: 0;
+  color: var(--ak-text-secondary);
+  font-family: var(--ak-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ark-gold);
-  text-shadow: 0 0 18px var(--ark-gold-dim);
 }
 
 /* ========================================
-   Loading spinner / 加载圈
+   Loading / 加载（ak-ui loading，vendored/adapted 自 @yunyoujun/ak-ui _ak-loading）
    ======================================== */
 
-@keyframes ark-spin {
+@keyframes ak-radio {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
   to {
-    transform: rotate(360deg);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4);
   }
 }
 
-.ark-spinner {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--ark-spinner-track);
-  border-top-color: var(--ark-gold);
-  border-radius: 50%;
-  animation: ark-spin 0.8s linear infinite;
+.ak-loading {
+  --ak-loading-color: var(--ak-signal-accent);
+  --ak-loading-size: 22px;
+  --ak-loading-border: 4px;
+  position: relative;
   box-sizing: border-box;
+  flex-shrink: 0;
+  display: inline-block;
+  width: var(--ak-loading-size);
+  height: var(--ak-loading-size);
+  border: var(--ak-loading-border) solid var(--ak-loading-color);
+  background: transparent;
+  transform: rotate(-45deg);
 }
 
-/* 按钮内联加载圈（跟随按钮文字颜色） */
-.ark-btn-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(127, 127, 127, 0.4);
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: ark-spin 0.8s linear infinite;
-  display: inline-block;
+.ak-loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
   box-sizing: border-box;
-  vertical-align: middle;
+  width: 100%;
+  height: 100%;
+  border: var(--ak-loading-border) solid var(--ak-loading-color);
+  transform: translate(-50%, -50%) scale(1);
+  animation: ak-radio 0.7s ease-out infinite;
+}
+
+/* 整页加载遮罩 */
+.ark-page-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ak-surface-canvas);
 }
 
 .ark-spinner-box {
@@ -263,11 +343,14 @@ html.dark .collection-view {
     width: 50%;
     max-width: 50%;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .ark-game-data {
-    max-height: calc(100vh - 250px);
-    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    max-height: max(320px, calc(100vh - 250px));
   }
 }
 
@@ -518,4 +601,220 @@ html.dark .collection-view {
   align-items: flex-end;
   gap: calc(var(--char-card-w) * 0.04);
   z-index: 6;
+}
+
+/* ========================================
+   ak-ui（accent 模式）
+   令牌 vendored from @yunyoujun/ak-ui@0.2.1 tokens.css，
+   语义角色按宿主品牌映射；保留现有布局，仅注入字体层级、
+   信号色、可见焦点与克制的几何切角。
+   ======================================== */
+
+:root {
+  /* 调色板 */
+  --ak-color-white: #ffffff;
+  --ak-color-black: #000000;
+  --ak-color-low: #9c9c9c;
+  --ak-color-basic: #d8dd5a;
+  --ak-color-primary: #4aabea;
+  --ak-color-secondary: #cfc2d1;
+  --ak-color-advanced: #f1c644;
+  --ak-color-accent: #f6540e;
+  --ak-color-blue: #22bbff;
+  --ak-color-yellow: #ffd802;
+  --ak-color-dark-blue: #0075a8;
+  --ak-color-light-blue: #3ff7ff;
+  --ak-color-gray: #313131;
+  --ak-color-dark: #222222;
+
+  /* 语义表面：委托宿主品牌 token（单一事实来源） */
+  --ak-surface-canvas: var(--ark-bg);
+  --ak-surface-panel: #ffffff;
+  --ak-surface-muted: rgba(245, 245, 245, 0.92);
+  --ak-surface-raised: rgba(40, 40, 40, 0.92);
+  --ak-surface-inverse: #1a1a1a;
+
+  /* 语义文本 */
+  --ak-text-primary: var(--ark-text);
+  --ak-text-secondary: var(--ark-text-dim);
+  --ak-text-inverse: #f5f5f5;
+
+  /* 功能信号：品牌映射 */
+  --ak-signal-info: var(--ak-color-primary);
+  --ak-signal-action: #f1c644;
+  --ak-signal-accent: var(--ark-gold);
+  --ak-signal-success: #3fb950;
+  --ak-signal-danger: #f85149;
+  --ak-signal-disabled: #9c9c9c;
+
+  /* 字体 */
+  --ak-font-sans: system-ui, -apple-system, sans-serif;
+  --ak-font-serif: "Noto Serif SC", "Source Han Serif SC", Georgia, "SimSun", serif;
+  --ak-font-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  --ak-font-command: var(--ak-font-serif);
+
+  /* 间距 */
+  --ak-space-1: 0.25rem;
+  --ak-space-2: 0.5rem;
+  --ak-space-3: 0.75rem;
+  --ak-space-4: 1rem;
+  --ak-space-5: 1.5rem;
+  --ak-space-6: 2rem;
+
+  /* 几何与深度 */
+  --ak-line-hairline: 1px;
+  --ak-line-strong: 4px;
+  --ak-cut-sm: 0.375rem;
+  --ak-cut-md: 0.75rem;
+  --ak-cut-lg: 1.5rem;
+  --ak-radius-subtle: 2px;
+  --ak-shadow-panel: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.16);
+
+  /* 动效与焦点 */
+  --ak-motion-fast: 120ms;
+  --ak-motion-base: 200ms;
+  --ak-motion-slow: 420ms;
+  --ak-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ak-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ak-focus-color: var(--ak-signal-accent);
+  --ak-focus-width: 3px;
+  --ak-focus-offset: 3px;
+}
+
+html.dark {
+  --ak-surface-panel: #1a1a1a;
+  --ak-surface-muted: rgba(26, 26, 26, 0.92);
+  --ak-surface-raised: rgba(66, 66, 66, 0.92);
+  --ak-surface-inverse: #17191b;
+  --ak-text-inverse: #1b1d1f;
+  --ak-shadow-panel: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.55);
+}
+
+/* —— accent 模式作用域规则（data-ak-ui 内）—— */
+
+/* 可见键盘焦点 */
+[data-ak-ui] :focus-visible {
+  outline: var(--ak-focus-width) solid var(--ak-focus-color);
+  outline-offset: var(--ak-focus-offset);
+}
+
+/* 命令级标题：衬线 + 收紧字距 */
+[data-ak-ui] .ark-page-title {
+  font-family: var(--ak-font-command);
+  letter-spacing: 0.06em;
+}
+
+/* 克制的几何切角（右上角） */
+[data-ak-ui] .ak-cut-tr {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--ak-cut-sm)) 0,
+    100% var(--ak-cut-sm),
+    100% 100%,
+    0 100%
+  );
+}
+
+/* 左侧信号条 */
+[data-ak-ui] .ak-bar-l {
+  border-left: var(--ak-line-strong) solid var(--ak-signal-accent) !important;
+}
+
+/* 元数据标签：等宽 + 全大写 + 字距 */
+[data-ak-ui] .ak-label-mono {
+  font-family: var(--ak-font-mono) !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase;
+}
+
+/* 交互反馈：全部按钮的通用动效 */
+[data-ak-ui] button {
+  transition:
+    transform var(--ak-motion-fast) var(--ak-ease-standard),
+    filter var(--ak-motion-fast) var(--ak-ease-standard),
+    box-shadow var(--ak-motion-fast) var(--ak-ease-standard),
+    border-color var(--ak-motion-fast) var(--ak-ease-standard),
+    color var(--ak-motion-fast) var(--ak-ease-standard),
+    background-color var(--ak-motion-fast) var(--ak-ease-standard);
+}
+
+[data-ak-ui] button:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+[data-ak-ui] button:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+/* —— system 模式：分层表面背景 —— */
+[data-ak-ui] .ak-surface {
+  border: var(--ak-line-hairline) solid var(--ark-border-strong);
+  box-shadow: var(--ak-shadow-panel);
+}
+
+/* —— ak-ui card（vendored/adapted 自 @yunyoujun/ak-ui _ak-card）—— */
+[data-ak-ui] .ak-card {
+  box-sizing: border-box;
+  padding: 12px;
+  background: var(--ark-panel);
+  border: var(--ak-line-hairline) solid var(--ark-border-weak);
+  box-shadow: var(--ak-shadow-panel);
+  transition: box-shadow var(--ak-motion-fast) var(--ak-ease-standard);
+}
+
+[data-ak-ui] .ak-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+[data-ak-ui] .ak-card__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ark-text);
+}
+
+/* 条纹卡片（对角斜纹） */
+[data-ak-ui] .ak-card--stripe {
+  --ak-card-stripe: var(--ak-color-low);
+  padding: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 6px,
+    var(--ak-card-stripe) 6px,
+    var(--ak-card-stripe) 8px
+  );
+  border-color: transparent;
+  box-shadow: none;
+  opacity: 0.45;
+}
+
+/* 人物放置卡片（ak-card--place）：底部稀有度色条（accent 模式：克制单线条处理） */
+[data-ak-ui] .ak-card--place {
+  --ak-card-place-color: white;
+  padding: 0;
+  background: transparent;
+  border: var(--ak-line-hairline) solid transparent;
+  border-bottom: var(--ak-line-strong) solid var(--ak-card-place-color);
+}
+
+/* 减少动态偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .ak-loading::after {
+    animation-duration: 2s;
+  }
+
+  [data-ak-ui] button,
+  [data-ak-ui] .ak-button {
+    transition: none;
+  }
+
+  .operator-handbook-item-wrapper:hover {
+    transform: none;
+  }
 }
