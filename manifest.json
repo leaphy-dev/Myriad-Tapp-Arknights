@@ -44,6 +44,7 @@
     "widget:register"
   ],
   "assets": [
+    "assets/page_mask.png",
     "assets/rank/elite0.png",
     "assets/rank/elite1.png",
     "assets/rank/elite2.png",
@@ -73,13 +74,6 @@
     "assets/star/charBg_r5.png"
   ],
   "settings": [
-    {
-      "key": "sklandToken",
-      "type": "input",
-      "label": "森空岛 Token",
-      "description": "格式：cred,token",
-      "placeholder": "cred,token"
-    },
     {
       "key": "resourceBaseUrl",
       "type": "input",

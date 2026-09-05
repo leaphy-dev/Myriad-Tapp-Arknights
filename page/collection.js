@@ -40,7 +40,9 @@
     if (!section) return;
     section.innerHTML = '';
 
-    var wrap = section;
+    var wrap = document.createElement('div');
+    wrap.setAttribute('class', 'ark-page-inner');
+    section.appendChild(wrap);
 
     var topBar = document.createElement('div');
     topBar.setAttribute('style', 'display:flex;align-items:center;gap:12px;margin-bottom:16px;');

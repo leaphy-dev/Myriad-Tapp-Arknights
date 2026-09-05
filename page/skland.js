@@ -12,7 +12,7 @@
       saved = credToken;
     } else {
       try {
-        var v = await Tapp.settings.get('sklandToken');
+        var v = await Tapp.storage.get('sklandToken');
         if (v && typeof v === 'string') saved = v;
       } catch (e) {}
     }

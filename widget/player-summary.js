@@ -6,6 +6,7 @@
 
 (function () {
   var core = require('../core.js');
+  var lastKey = '';
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -27,9 +28,9 @@
   function buildAvatar(c, scale, sizePx, src) {
     var html =
       '<div style="position:relative;width:' + sizePx + 'px;height:' + sizePx + 'px;flex-shrink:0;' +
-      'border-radius:8px;overflow:hidden;background:' + c.cellBg + ';border:1px solid ' + c.border + ';' +
+      'border-radius:8px;overflow:hidden;background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
       'display:flex;align-items:center;justify-content:center;">' +
-      '<span style="font-size:' + Math.round(sizePx * 0.45) + 'px;">🛡️</span>';
+      '<span style="font-size:' + Math.round(sizePx * 0.45) + 'px;"> </span>';
     if (src) {
       html +=
         '<img referrerpolicy="no-referrer" src="' + esc(src) + '" alt="" ' +
@@ -49,7 +50,7 @@
     if (summary.level) {
       html +=
         '<span style="display:inline-block;align-self:flex-start;padding:1px 8px;border-radius:999px;' +
-        'background:' + c.cellBg + ';border:1px solid ' + c.border + ';' +
+        'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
         'font-size:' + Math.round(11 * fontScale) + 'px;font-weight:700;color:' + c.textDim + ';">' +
         esc(summary.level) + '</span>';
     }
@@ -62,7 +63,7 @@
     for (var i = 0; i < summary.items.length; i++) {
       html +=
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;' +
-        'background:' + c.cellBg + ';border:1px solid ' + c.border + ';border-radius:8px;' +
+        'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';border-radius:8px;' +
         'padding:' + Math.round(6 * scale) + 'px ' + Math.round(8 * scale) + 'px;">' +
         '<span style="font-size:' + Math.round(9 * fontScale) + 'px;color:' + c.textMuted + ';' +
         'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(core.t(summary.items[i][0])) + '</span>' +
@@ -99,7 +100,7 @@
   function buildWide(c, primary, scale, fontScale, summary, props) {
     return (
       '<div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;' +
-      'background:' + c.bg + ';border:1px solid ' + c.border + ';">' +
+      'background:' + c.bg + ';border:1px solid ' + c.border + ';' + c.glass + '">' +
       buildGlow(primary) +
       '<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;' +
       'padding:' + Math.round(12 * scale) + 'px;">' +
@@ -113,7 +114,7 @@
   function buildLarge(c, primary, scale, fontScale, summary, assist, props) {
     return (
       '<div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;' +
-      'background:' + c.bg + ';border:1px solid ' + c.border + ';">' +
+      'background:' + c.bg + ';border:1px solid ' + c.border + ';' + c.glass + '">' +
       buildGlow(primary) +
       '<div style="position:absolute;inset:0;display:flex;flex-direction:column;' +
       'padding:' + Math.round(14 * scale) + 'px;">' +
@@ -137,7 +138,7 @@
   function buildEmpty(c, primary, scale, fontScale) {
     return (
       '<div style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;' +
-      'background:' + c.bg + ';border:1px solid ' + c.border + ';">' +
+      'background:' + c.bg + ';border:1px solid ' + c.border + ';' + c.glass + '">' +
       buildGlow(primary) +
       '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;' +
       'justify-content:center;padding:12px;">' +
@@ -146,6 +147,24 @@
       esc(core.t('widget.empty')) + '</span>' +
       '</div></div>'
     );
+  }
+
+  function buildShell(c, primary, scale, fontScale, size, props) {
+    var placeholder = {
+      name: '—',
+      avatar: '',
+      level: '',
+      items: [
+        ['assets.progress', '—'],
+        ['assets.operators', '—'],
+        ['assets.skins', '—'],
+        ['assets.furniture', '—'],
+        ['assets.medals', '—']
+      ]
+    };
+    return size === '4x4'
+      ? buildLarge(c, primary, scale, fontScale, placeholder, [], props)
+      : buildWide(c, primary, scale, fontScale, placeholder, props);
   }
 
   function bindImgFallback(container) {
@@ -169,19 +188,39 @@
 
     var isDark = theme === 'dark';
     var c = {
-      bg: isDark ? 'rgba(26,26,26,0.82)' : 'rgba(255,255,255,0.62)',
-      border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+      bg: isDark ? 'rgba(26,26,26,0.8)' : 'rgba(255,255,255,0.7)',
+      glass: 'backdrop-filter:blur(16px) saturate(180%);-webkit-backdrop-filter:blur(16px) saturate(180%);',
+      border: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.3)',
+      cellBorder: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
       textMain: isDark ? '#f5f5f5' : '#1f1f1f',
       textDim: isDark ? '#a3a3a3' : '#4b5563',
       textMuted: isDark ? '#737373' : '#9ca3af',
-      cellBg: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'
+      cellBg: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.6)'
     };
+
+    // 首帧同步渲染占位壳：容器为空时先铺结构与占位数据，避免异步加载期间整卡全白
+    if (!container.firstChild) {
+      container.innerHTML = buildShell(c, primary, scale, fontScale, size, props);
+    }
 
     return (async function () {
       var data = null;
       try {
         data = await Tapp.shared.get(core.PLAYER_DATA_KEY);
       } catch (e) {}
+
+      // 幂等渲染：尺寸 / 主题 / 缩放 / 数据版本未变化时跳过重建，避免卡片闪烁
+      var key = [
+        size,
+        theme,
+        String(scale),
+        String(fontScale),
+        primary,
+        props.isEditMode ? 'edit' : 'view',
+        data && data.data ? String(data.ts || 'no-ts') : 'empty'
+      ].join('|');
+      if (key === lastKey) return;
+      lastKey = key;
 
       if (!data || !data.data) {
         container.innerHTML = buildEmpty(c, primary, scale, fontScale);

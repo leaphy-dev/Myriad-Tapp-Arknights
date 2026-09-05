@@ -108,6 +108,14 @@ require('./debug.js');
       });
     } catch (e) {}
 
+    // 加载页面遮罩资源，应用到亮/暗两种模式的页面背景
+    try {
+      var mask = await Tapp.assets.getUrl('assets/page_mask.png');
+      if (mask && mask.url) {
+        document.documentElement.style.setProperty('--page-mask', 'url("' + mask.url + '")');
+      }
+    } catch (e) {}
+
     silentRefresh().catch(function (e) {
       console.error('Failed to refresh player data:', e);
     });

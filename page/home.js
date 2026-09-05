@@ -15,7 +15,9 @@
     if (!homeSection) return;
     homeSection.innerHTML = '';
 
-    var wrap = homeSection;
+    var wrap = document.createElement('div');
+    wrap.setAttribute('class', 'ark-page-inner');
+    homeSection.appendChild(wrap);
 
     var navRow = document.createElement('div');
     navRow.setAttribute('class', 'ark-page-nav');
@@ -198,6 +200,7 @@
       }
       clearError(step);
       state.credToken = credToken;
+      try { Tapp.storage.set('sklandToken', credToken); } catch (e) {}
       runBinding(wrap, step, nextBtn);
     });
 
@@ -474,7 +477,7 @@
 
   async function loadSavedToken(input) {
     try {
-      var saved = await Tapp.settings.get('sklandToken');
+      var saved = await Tapp.storage.get('sklandToken');
       if (saved && typeof saved === 'string') input.value = saved;
     } catch (e) {}
   }
@@ -556,7 +559,7 @@
   async function selectAccount(wrap, binding, btn) {
     var credToken = state.credToken;
     if (!credToken) {
-      try { credToken = (await Tapp.settings.get('sklandToken')) || ''; } catch (e) {}
+      try { credToken = (await Tapp.storage.get('sklandToken')) || ''; } catch (e) {}
     }
 
     var skland = window.__arkSkland;
