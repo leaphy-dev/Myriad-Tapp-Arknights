@@ -8,8 +8,8 @@
   --ark-text: #1a1a1a;
   --ark-text-dim: rgba(0, 0, 0, 0.55);
   --ark-text-muted: #3a3a3a;
-  --ark-panel: rgba(255, 255, 255, 0.7);
-  --ark-panel-2: rgba(250, 250, 250, 0.7);
+  --ark-panel: rgba(255, 255, 255, 0.55);
+  --ark-panel-2: rgba(250, 250, 250, 0.55);
   --ark-border: rgba(0, 0, 0, 0.22);
   --ark-border-strong: rgba(0, 0, 0, 0.35);
   --ark-border-weak: rgba(0, 0, 0, 0.12);

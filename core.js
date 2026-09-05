@@ -120,24 +120,44 @@ function assistAvatarUrl(repoBase, op) {
   return skinAvatarUrl(repoBase, op.skinId) || avatarUrl(repoBase, op.id || op.charId, op.evolvePhase);
 }
 
-// 助战干员（前 3 个），含名称与头像 URL；异步（需读取资源仓库地址）
+var _eliteUrlsCache = null;
+
+// 精英化标识图片（包内资源 → blob URL），缓存
+async function getEliteUrls() {
+  if (_eliteUrlsCache) return _eliteUrlsCache;
+  var urls = {};
+  try {
+    urls[0] = (await Tapp.assets.getUrl('assets/rank/elite0.png')).url;
+    urls[1] = (await Tapp.assets.getUrl('assets/rank/elite1.png')).url;
+    urls[2] = (await Tapp.assets.getUrl('assets/rank/elite2.png')).url;
+  } catch (e) {
+    urls = {};
+  }
+  _eliteUrlsCache = urls;
+  return urls;
+}
+
+// 助战干员（前 3 个），含名称 / 头像 / 精英化标识；异步（需读取资源仓库地址）
 async function getAssistUnits(data) {
   var player = (data && data.player) || {};
   var list = Array.isArray(player.assistChars) ? player.assistChars.slice(0, 3) : [];
   if (!list.length) return [];
   var charInfoMap = player.charInfoMap || {};
   var repoBase = await getRepoBase();
+  var eliteUrls = await getEliteUrls();
   var units = [];
   for (var i = 0; i < list.length; i++) {
     var c = list[i];
     var id = c.charId;
     var info = charInfoMap && charInfoMap[id];
+    var phase = c.evolvePhase || 0;
     units.push({
       id: id,
       name: (info && info.name) || id,
       level: c.level,
-      evolvePhase: c.evolvePhase || 0,
-      avatarUrl: assistAvatarUrl(repoBase, { id: id, charId: id, skinId: c.skinId, evolvePhase: c.evolvePhase })
+      evolvePhase: phase,
+      avatarUrl: assistAvatarUrl(repoBase, { id: id, charId: id, skinId: c.skinId, evolvePhase: phase }),
+      eliteUrl: eliteUrls[phase] || ''
     });
   }
   return units;
@@ -154,5 +174,6 @@ module.exports = {
   avatarUrl: avatarUrl,
   skinAvatarUrl: skinAvatarUrl,
   assistAvatarUrl: assistAvatarUrl,
+  getEliteUrls: getEliteUrls,
   getAssistUnits: getAssistUnits
 };

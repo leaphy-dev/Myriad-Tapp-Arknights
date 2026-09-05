@@ -20,10 +20,10 @@
       "id": "player-summary",
       "name": "玩家信息",
       "description": "展示玩家头像、名称与数据概要（4x4 额外展示助战干员）",
-      "icon": "🛡️",
-      "defaultSize": "4x2",
+      "icon": "🧊",
+      "defaultSize": "4x4",
       "sizes": ["4x2", "4x4"],
-      "category": "utility",
+      "category": "stats",
       "entry": "widget/player-summary.js",
       "refreshPolicy": {
         "mode": "event",
