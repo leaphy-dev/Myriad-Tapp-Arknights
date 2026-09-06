@@ -306,7 +306,7 @@ function activityCard(act, i) {
   ].join('\n');
 }
 
-function genHtml(playerAvatar, skills, potentials) {
+function genHtml(playerAvatar, skills, potentials, version) {
   const assistHtml = PLAYER.assist.map(assistUnit).join('\n');
   const charsHtml = PLAYER.chars.map((op) => opCard(op, skills, potentials)).join('\n');
   const statsHtml = PLAYER.stats.map(([l, v]) => statCell(l, v)).join('\n');
@@ -407,7 +407,7 @@ ${activitiesHtml}
       </div>
 
       <footer class="ark-app-footer">
-        <div>明日方舟 · v0.1.0</div>
+        <div>明日方舟 · v${version}</div>
         <div>Tapp 所涉及的公司名称、商标、产品等均为其各自所有者的资产，仅供识别。Tapp 内使用的游戏图片、动画、音频、文本原文，仅用于更好地表现游戏资料，其版权属于 Arknights / 上海鹰角网络科技有限公司</div>
       </footer>
 
@@ -466,9 +466,10 @@ async function main() {
   const assets = { careers, stars, bgs, elites, potentials, avatars, portraits, skills };
 
   // 3) emit
+  const manifest = JSON.parse(await readFile(join(ROOT, 'manifest.json'), 'utf8'));
   const playerAvatar = await fetchPlayerAvatar();
   const css = genCss(assets, operators);
-  const html = genHtml(playerAvatar, skills, potentials);
+  const html = genHtml(playerAvatar, skills, potentials, manifest.version || '0.0.0');
 
   const body = (html.match(/<main[\s\S]*<\/main>/) || [html])[0];
   const localHtml =
