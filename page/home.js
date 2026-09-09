@@ -94,15 +94,12 @@
 
   async function initView(wrap) {
     var stored = null;
-    try {
-      stored = await Tapp.shared.get(PLAYER_DATA_KEY);
-    } catch (e) {}
-
+    stored = await core.loadPlayerData()
     updateRefreshTime(wrap, stored);
 
     if (stored && stored.data && stored.data.player) {
       showPage(wrap, 'display');
-      renderDisplay(wrap, stored.data);
+      renderDisplay(wrap, null); //TODO
     } else {
       showPage(wrap, 'step1');
     }
@@ -138,11 +135,9 @@
 
   async function cancelRefresh(wrap) {
     var stored = null;
-    try {
-      stored = await Tapp.shared.get(PLAYER_DATA_KEY);
-    } catch (e) {}
-    if (stored && stored.data && stored.data.player) {
-      renderDisplay(wrap, stored.data);
+    stored = await core.loadPlayerData(null)
+    if (stored) {
+      renderDisplay(wrap, null); //TODO
       showPage(wrap, 'display');
     }
   }
@@ -157,10 +152,10 @@
     return d.getFullYear() + '-' + m + '-' + day + ' ' + h + ':' + mi;
   }
 
-  function updateRefreshTime(wrap, stored) {
+  function updateRefreshTime(wrap, uid) {
     var el = wrap.querySelector('[data-refresh-time]');
     if (!el) return;
-    var t = stored && stored.ts ? formatTs(stored.ts) : '';
+    var t = core.getDataUpdateTs(uid);
     el.textContent = t ? core.t('home.refreshTime') + ' ' + t : '';
   }
 
@@ -341,12 +336,16 @@
     }
 
     for (var i = 0; i < state.binds.length; i++) {
-      (function (b) {
+      (
+      /**
+       * @param {{ nickName?: string, channelName?: string, uid?: string }} b
+       */
+      function (b) {
         var btn = document.createElement('button');
         btn.type = 'button';
         var name = b.nickName || core.t('common.unknown');
         var channel = b.channelName || '';
-        btn.textContent = name + '（' + channel + '） UID:' + b.uid;
+        btn.textContent = name + '(' + channel + ') UID:' + b.uid;
         btn.setAttribute('class', 'ak-button ak-button--ghost');
         btn.setAttribute(
           'style',
@@ -383,14 +382,14 @@
     wrap.appendChild(page);
   }
 
-  async function renderDisplay(wrap, data) {
+  async function renderDisplay(wrap, uid) {
+    // console.debug("rending Display part")
     var page = wrap.querySelector('[data-page="display"]');
     var content = page.querySelector('[data-display-content]');
     if (!content) return;
     content.innerHTML = '';
 
-    var player = data.player || {};
-    var status = player.status;
+    var status = core.getPlayerStatus(uid);
 
     var nameRow = document.createElement('div');
     nameRow.setAttribute('class', 'ark-player-header');
@@ -441,7 +440,7 @@
 
     var name = document.createElement('div');
     name.setAttribute('style', 'font-size:16px;font-weight:600;color:var(--ark-text);');
-    name.textContent = status && status.name ? status.name : (data.nickName || '');
+    name.textContent = status && status.name;
     nameBox.appendChild(name);
 
     if (status && status.registerTs) {
@@ -467,13 +466,13 @@
     nameRow.appendChild(nameBox);
     content.appendChild(nameRow);
 
-    var assist = player.assistChars;
+    var assists = core.getPlayerAssistChars(uid);
     var assets = window.__arkAssets;
 
     if (!assets) return;
 
-    var infoCard = assets.buildPlayerInfoCard(player);
-    var gameDataCard = assets.buildGameDataCard(player);
+    var infoCard = assets.buildPlayerInfoCard(uid);
+    var gameDataCard = assets.buildGameDataCard(uid);
 
     var layout = document.createElement('div');
     layout.setAttribute('class', 'ark-display-layout');
@@ -513,13 +512,28 @@
     content.appendChild(layout);
 
     assets.loadAssets().then(function () {
-      assets.setCharInfoMap(player.charInfoMap);
-      assistPlaceholder.replaceWith(assets.buildAssistUnit(assist));
-      myCharsPlaceholder.replaceWith(assets.buildMyChars(player.chars, player.charInfoMap));
-    }).catch(function () {
+    // assets.setCharInfoMap(player.charInfoMap);
+    assistPlaceholder.replaceWith(assets.buildAssistUnit(assists));
+    myCharsPlaceholder.replaceWith(assets.buildMyChars(core.getPlayerChars(), core.getCharInfoMap()));
+    }).catch(function (error) {
+      console.error('加载资源失败:', error);
+      
       var fail = document.createElement('div');
       fail.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);padding:16px;text-align:center;');
-      fail.textContent = core.t('home.loadFail');
+      
+      // 显示具体错误信息
+      var errorMsg = error.message || core.t('home.loadFail');
+      fail.textContent = core.t('home.loadFail') + ' (' + errorMsg + ')';
+      
+      // 添加重试按钮
+      var retryBtn = document.createElement('button');
+      retryBtn.textContent = '重试';
+      retryBtn.setAttribute('style', 'margin-top:8px;padding:4px 12px;cursor:pointer;');
+      retryBtn.onclick = function() {
+        location.reload();
+      };
+      fail.appendChild(retryBtn);
+      
       assistPlaceholder.replaceWith(fail);
       myCharsPlaceholder.replaceWith(fail.cloneNode(true));
     });
@@ -650,15 +664,22 @@
     if (!skland) throw new Error(core.t('home.errorModule'));
     var info = await skland.getPlayerInfo(binding.uid, credToken);
     var data = info && info.data ? info.data : null;
-    await Tapp.shared.set(PLAYER_DATA_KEY, {
-      ts: Date.now(),
-      data: {
+    // await Tapp.shared.set(PLAYER_DATA_KEY, {
+    //   ts: Date.now(),
+    // data: {
+    //   uid: binding.uid,
+    //   nickName: binding.nickName || '',
+    //   channelName: binding.channelName || '',
+    //   player: data
+    // }
+    // });
+    await core.setPlayerData({
         uid: binding.uid,
         nickName: binding.nickName || '',
         channelName: binding.channelName || '',
         player: data
-      }
-    });
+      })
+
     try {
       await Tapp.widget.invalidate('data-ready', { target: { widgetId: 'player-summary' } });
     } catch (e) {}
@@ -668,7 +689,9 @@
   async function selectAccount(wrap, binding, btn) {
     var credToken = state.credToken;
     if (!credToken) {
-      try { credToken = (await Tapp.storage.get('sklandToken')) || ''; } catch (e) {}
+      try {
+      credToken = (await Tapp.storage.get('sklandToken')) || '';
+      } catch (e) {}
     }
 
     var listBox = wrap.querySelector('[data-account-list]');
@@ -686,16 +709,19 @@
     }
 
     try {
-      var data = await fetchPlayerData(binding, credToken);
-      updateRefreshTime(wrap, { ts: Date.now() });
-      showPage(wrap, 'display');
-      renderDisplay(wrap, {
+      var data = {
         uid: binding.uid,
         nickName: binding.nickName || '',
-        player: data
-      });
+        player: await fetchPlayerData(binding, credToken)
+      }
+
+      core.setPlayerData(data)
+      updateRefreshTime(wrap, { ts: Date.now() });
+      showPage(wrap, 'display');
+      
+      renderDisplay(wrap, null); //TODO
     } catch (e) {
-      showError(wrap.querySelector('[data-page="step2"]'), String((e && e.message) || e));
+      showError(wrap.querySelector('[data-page="step2"]'), String(e));
     } finally {
       setButtonLoading(btn, false);
       for (var j = 0; j < siblings.length; j++) {

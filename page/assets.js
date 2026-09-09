@@ -4,7 +4,7 @@
 
 (function () {
   var core = require('../core.js');
-  var _charInfoMap = null;
+
   var _eliteUrls = {};
   var _professionUrls = {};
   var _potentialUrls = {};
@@ -108,7 +108,6 @@
   }
 
   function portraitUrl(charId, evolvePhase) {
-    // TODO: 根据潜能识别皮肤，以后解析skin字段
     var suffix = evolvePhase === 2 ? '_2' : '_1';
     return _repoBase + '/portrait/' + charId + suffix + '.png';
   }
@@ -137,14 +136,9 @@
     return _rarityBgUrls[key] || '';
   }
 
-  function setCharInfoMap(map) {
-    _charInfoMap = map || null;
-  }
-
-  function operatorName(charId) {
-    var info = _charInfoMap && _charInfoMap[charId];
-    return (info && info.name) || charId;
-  }
+  // function setCharInfoMap(map) {
+  //   _charInfoMap = map || null;
+  // }
 
   function placeColor(rarity) {
     if (rarity >= 5) return 'var(--ak-color-advanced)';
@@ -153,7 +147,7 @@
   }
 
   function buildOperatorAvatar(op) {
-    var info = _charInfoMap && _charInfoMap[op.id];
+    var info = core.getCharInfoMap()[op.id];
     var rarity = info && info.rarity != null ? info.rarity : 0;
 
     var wrap = document.createElement('div');
@@ -266,7 +260,7 @@
     var row = document.createElement('div');
     row.setAttribute('style', 'display:flex;gap:12px;flex-wrap:nowrap;justify-content:center;');
 
-    for (var i = 0; i < list.length; i++) {
+    for (let i = 0; i < list.length; i++) {
       var op = {
         id: list[i].charId,
         level: list[i].level,
@@ -287,7 +281,7 @@
         'font-size:10px;color:var(--ark-text-muted);max-width:calc(var(--assist-avatar) + 8px);' +
           'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
       );
-      name.textContent = operatorName(op.id);
+      name.textContent = core.getOperatorName(op.id);
       unit.appendChild(name);
 
       row.appendChild(unit);
@@ -391,8 +385,8 @@
     return wrap;
   }
 
-  function buildCharCard(char, info) {
-    var rarity = info && info.rarity != null ? info.rarity : 0;
+  function buildCharCard(char, charInfo) {
+    var rarity = charInfo && charInfo.rarity != null ? charInfo.rarity : 0;
 
     var card = document.createElement('div');
     card.className = 'operator-handbook-item-wrapper';
@@ -458,12 +452,12 @@
 
     var nameEl = document.createElement('div');
     nameEl.className = 'operator-handbook-item-component operator-handbook-item-name';
-    nameEl.textContent = operatorName(char.charId);
+    nameEl.textContent = core.getOperatorName(char.charId);
     card.appendChild(nameEl);
 
     var career = document.createElement('div');
     career.className = 'operator-handbook-item-component operator-handbook-item-career';
-    var profKey = info && info.profession ? info.profession.toLowerCase() : '';
+    var profKey = charInfo && charInfo.profession ? charInfo.profession.toLowerCase() : '';
     var profUrl = _professionUrls[profKey];
     if (profUrl) {
       var profImg = document.createElement('img');
@@ -534,7 +528,7 @@
       lvCircle.textContent = String(char.level);
       card.appendChild(lvCircle);
     }
-
+    //优先用皮肤
     var illusSrc = skinUrl(char.skinId) || portraitUrl(char.charId, char.evolvePhase || 0);
     if (typeof IntersectionObserver !== 'undefined') {
       var io = new IntersectionObserver(function (entries) {
@@ -553,8 +547,8 @@
     return card;
   }
 
-  function buildPlayerInfoCard(player) {
-    var summary = core.getPlayerSummary({ player: player });
+  function buildPlayerInfoCard(uid) {
+    var summary = core.generatePlayerSummary(uid);
 
     var wrap = document.createElement('div');
     wrap.setAttribute(
@@ -590,7 +584,7 @@
     return wrap;
   }
 
-  function buildGameDataCard(player) {
+  function buildGameDataCard(uid) {
     var wrap = document.createElement('div');
     wrap.setAttribute('class', 'ark-game-data ak-card');
     wrap.setAttribute(
@@ -689,23 +683,23 @@
         );
         tab.addEventListener('click', function () {
           contentBox.innerHTML = '';
-          renderGameMode(contentBox, key, player);
+          renderGameMode(contentBox, key, uid);
         });
         tabBar.appendChild(tab);
       })(tabs[i][0], tabs[i][1]);
     }
 
     // 默认显示第一个
-    renderGameMode(contentBox, 'sidestory', player);
+    renderGameMode(contentBox, 'sidestory', uid);
 
     return wrap;
   }
 
-  function renderGameMode(contentBox, key, player) {
-    if (key === 'sidestory') renderActivity(contentBox, player);
-    else if (key === 'rogue') renderRogue(contentBox, player);
-    else if (key === 'campaign') renderCampaign(contentBox, player);
-    else if (key === 'tower') renderTower(contentBox, player);
+  function renderGameMode(contentBox, key, uid) {
+    if (key === 'sidestory') renderActivity(contentBox, uid);
+    else if (key === 'rogue') renderRogue(contentBox, uid);
+    else if (key === 'campaign') renderCampaign(contentBox, uid);
+    else if (key === 'tower') renderTower(contentBox, uid);
   }
 
   function simpleRow(parent, label, value) {
@@ -798,8 +792,8 @@
     return box;
   }
 
-  function renderActivity(contentBox, player) {
-    var list = player && Array.isArray(player.activity) ? player.activity : [];
+  function renderActivity(contentBox, uid) {
+    var list = core.getPlayerActivity(uid);
     if (!list.length) {
       contentBox.textContent = core.t('assets.noActivity');
       return;
@@ -807,7 +801,7 @@
     var shown = 0;
     for (var i = 0; i < list.length; i++) {
       var act = list[i];
-      var info = player.activityInfoMap && player.activityInfoMap[act.actId];
+      var info = core.getActivityInfoMap(uid)[act.actId];
       var name = info && info.name ? info.name : (act.actId || core.t('assets.fallbackActivity'));
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
@@ -826,16 +820,16 @@
     if (!shown) contentBox.textContent = core.t('assets.noActivity');
   }
 
-  function renderRogue(contentBox, player) {
-    var records = player && player.rogue && Array.isArray(player.rogue.records) ? player.rogue.records : [];
+  function renderRogue(contentBox, uid) {
+    var records = core.getPlayerRogue(uid)?.records;
     if (!records.length) {
       contentBox.textContent = core.t('assets.noRogue');
       return;
     }
     var shown = 0;
-    for (var i = 0; i < records.length; i++) {
+    for (let i = 0; i < records.length; i++) {
       var r = records[i];
-      var info = player.rogueInfoMap && player.rogueInfoMap[r.rogueId];
+      var info = core.getRogueInfoMap(uid)[r.rogueId];
       var name = info && info.name ? info.name : (r.rogueId || core.t('assets.fallbackRogue'));
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
@@ -850,13 +844,13 @@
     if (!shown) contentBox.textContent = core.t('assets.noRogue');
   }
 
-  function renderCampaign(contentBox, player) {
-    var records = player && player.campaign && Array.isArray(player.campaign.records) ? player.campaign.records : [];
+  function renderCampaign(contentBox, uid) {
+    var records = core.getPlayerCampaign(uid)?.records;
     if (!records.length) { contentBox.textContent = core.t('assets.noCampaign'); return; }
     var shown = 0;
-    for (var i = 0; i < records.length; i++) {
+    for (let i = 0; i < records.length; i++) {
       var r = records[i];
-      var info = player.campaignInfoMap && player.campaignInfoMap[r.campaignId];
+      var info = core.getCampaignInfoMap(uid)[r.campaignId];
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
       var name = info && info.name ? info.name : (r.campaignId || core.t('assets.fallbackCampaign'));
@@ -867,13 +861,13 @@
     if (!shown) contentBox.textContent = core.t('assets.noCampaign');
   }
 
-  function renderTower(contentBox, player) {
-    var records = player && player.tower && Array.isArray(player.tower.records) ? player.tower.records : [];
+  function renderTower(contentBox, uid) {
+    var records = core.getPlayerTower(uid)?.records;
     if (!records.length) { contentBox.textContent = core.t('assets.noTower'); return; }
     var shown = 0;
-    for (var i = 0; i < records.length; i++) {
+    for (let i = 0; i < records.length; i++) {
       var r = records[i];
-      var info = player.towerInfoMap && player.towerInfoMap[r.towerId];
+      var info = core.getTowerInfoMap(uid)[r.towerId];
       var picUrl = info && info.picUrl;
       if (!picUrl) continue;
       var name = info && info.name ? info.name : (r.towerId || (core.t('assets.fallbackTower') + (i + 1)));
@@ -893,7 +887,7 @@
 
   window.__arkAssets = {
     loadAssets: loadAssets,
-    setCharInfoMap: setCharInfoMap,
+
     buildOperatorAvatar: buildOperatorAvatar,
     buildAssistUnit: buildAssistUnit,
     buildMyChars: buildMyChars,
@@ -901,8 +895,7 @@
     buildPlayerInfoCard: buildPlayerInfoCard,
     buildGameDataCard: buildGameDataCard,
     buildSpacer: buildSpacer,
-    operatorName: operatorName,
-    charInfoMap: function () { return _charInfoMap; },
+
     professionUrl: function (key) { return _professionUrls[key] || ''; },
     skinUrl: skinUrl
   };

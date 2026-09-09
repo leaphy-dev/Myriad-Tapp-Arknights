@@ -4,8 +4,15 @@
 // Core / 共享层（Widget、Page、Headless 三模式均加载）
 // ========================================
 
+//TODO
 var PLAYER_DATA_KEY = 'arknights.player';
 
+var PLAYER_DATA_CACHE = null;
+var _playerDataPromise = null;
+
+// ========================================
+// i18
+// ========================================
 function t(key) {
   try {
     return Tapp.i18n.t(key);
@@ -26,45 +33,212 @@ function applyI18n(root) {
 }
 
 // ========================================
-// 玩家数据计算（纯数据，无 DOM 依赖，Page / Widget 共用）
+// 玩家数据（纯数据，无 DOM 依赖，Page / Widget 共用）
 // ========================================
+
+// 读取：首次调用从 shared 触发加载并返回 Promise<record|null>；之后复用同一
+// Promise（resolve 后同步写回 PLAYER_DATA_CACHE，供渲染期同步读取函数使用）。
+// 传 force=true 可强制重读 shared（跨沙箱场景下获取最新数据）
+function loadPlayerData(force) {
+  if (force || !_playerDataPromise) {
+    _playerDataPromise = (async function () {
+      try {
+        var data = await Tapp.shared.get(PLAYER_DATA_KEY);
+        PLAYER_DATA_CACHE = data || null;
+      } catch (e) {
+        PLAYER_DATA_CACHE = null;
+      }
+      return PLAYER_DATA_CACHE;
+    })();
+  }
+  return _playerDataPromise;
+}
+
+// 模块加载时自动预读缓存（异步、非阻塞）
+// loadPlayerData();
+
+async function setPlayerData(map, uid) {
+  var record = { ts: Date.now(), data: map };
+  PLAYER_DATA_CACHE = record;
+  _playerDataPromise = Promise.resolve(record);
+  await Tapp.shared.set(PLAYER_DATA_KEY, record);
+}
+
+function getDataUpdateTs(uid) {
+  var data = PLAYER_DATA_CACHE;
+  return data?.ts;
+}
+
+function getPlayerStatus(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.status) || {};
+}
+
+function getPlayerMedal(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.medal) || {};
+}
+
+function getPlayerAssistChars(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.assistChars) || {};
+}
+
+function getPlayerChars(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.chars) || {};
+}
+
+function getPlayerSkins(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.skins) || {};
+}
+
+function getPlayerBuilding(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.building) || {};
+}
+
+function getPlayerRecruit(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.recruit) || {};
+}
+
+function getPlayerCampaign(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.campaign) || {};
+}
+
+function getPlayerTower(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.tower) || {};
+}
+
+function getPlayerRogue(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.rogue) || {};
+}
+
+function getPlayerRoutine(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.routine) || {};
+}
+
+function getPlayerActivity(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.activity) || {};
+}
+
+function getCharInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.charInfoMap) || {};
+}
+
+function getSkinInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.skinInfoMap) || {};
+}
+
+function getStageInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.stageInfoMap) || {};
+}
+
+function getActivityInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.activityInfoMap) || {};
+}
+
+function getTowerInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.towerInfoMap) || {};
+}
+
+function getRogueInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.rogueInfoMap) || {};
+}
+
+function getCampaignInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.campaignInfoMap) || {};
+}
+
+function getCampaignZoneInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.campaignZoneInfoMap) || {};
+}
+
+function getEquipmentInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.equipmentInfoMap) || {};
+}
+
+function getManufactureFormulaInfoMap(uid) {
+  var data = PLAYER_DATA_CACHE;
+  var player = data && data.data ? data.data.player : null;
+  return (player && player.manufactureFormulaInfoMap) || {};
+}
+
+function getOperatorName(charId) {
+  var info = getCharInfoMap()[charId];
+  var locale = Tapp.i18n.getLocale();
+  // console.debug(Tapp.i18n.getLocale())；
+  if (locale == "zh-CN"){
+    return (info && info.name) || charId;
+  }else{
+    return (info && info.appellation) || charId;
+  }
+}
 
 function countUniqueChars(player) {
   var chars = player && Array.isArray(player.chars) ? player.chars : [];
-  var seen = {};
-  var count = 0;
-  for (var i = 0; i < chars.length; i++) {
-    var id = chars[i] && (chars[i].charId || chars[i].id);
-    if (id && !seen[id]) {
-      seen[id] = true;
-      count++;
+  var charInfoMap = player && player.charInfoMap ? player.charInfoMap : {};
+
+  var seen = new Set();
+  for (let i = 0; i < chars.length; i++) {
+    let id = chars[i] && chars[i].charId;
+    let appellation = charInfoMap[id] && charInfoMap[id].appellation
+    if (appellation){
+      seen.add(appellation)
     }
   }
-  return count || null;
-}
-
-function countMedals(medal) {
-  if (!medal) return '-';
-  if (typeof medal === 'object') {
-    if (medal.total !== undefined) return String(medal.total);
-    var keys = Object.keys(medal);
-    if (keys.length) return String(keys.length);
-  }
-  return String(medal);
+  // console.debug(seen)
+  return  seen.size > 0 ? seen.size : null;
 }
 
 // 从存储的玩家数据（{ player, nickName, ... }）生成概要，供主页与小组件共用
-function getPlayerSummary(data) {
-  var player = (data && data.player) || {};
-  var status = player.status || {};
-  var name = status.name || (data && data.nickName) || '';
+function generatePlayerSummary(uid) {
+  var status = getPlayerStatus()
+  var name = status.name || '';
   var avatar = (status.avatar && isHttpsUrl(status.avatar.url)) ? status.avatar.url : '';
   var level = status.level !== undefined ? String(status.level) : '';
-  var charCount = countUniqueChars(player);
+  var charCount = countUniqueChars(uid);
   var operators = charCount != null
     ? String(charCount)
     : (status.charCnt !== undefined ? String(status.charCnt) : '-');
-  var furniture = player.building && player.building.furniture && player.building.furniture.total;
+  var furnitureNum = getPlayerBuilding(uid)?.furniture?.total;
   var progress = status.mainStageProgress;
   var progressVal = progress
     ? (typeof progress === 'string' ? progress.replace(/^main_/i, '') : progress)
@@ -80,14 +254,14 @@ function getPlayerSummary(data) {
       ['assets.progress', progressVal],
       ['assets.operators', operators],
       ['assets.skins', status.skinCnt !== undefined ? String(status.skinCnt) : '-'],
-      ['assets.furniture', furniture !== undefined ? String(furniture) : '-'],
-      ['assets.medals', countMedals(player.medal)]
+      ['assets.furniture', furnitureNum !== undefined ? String(furnitureNum) : '-'],
+      ['assets.medals', getPlayerMedal(uid)?.total]
     ]
   };
 }
 
 // ========================================
-// 资源仓库与助战干员（供小组件等复用）
+// 资源仓库与助战干员（供pages+widgets等复用）
 // ========================================
 
 var _repoBaseCache = '';
@@ -136,7 +310,7 @@ function skinAvatarUrl(repoBase, skinId) {
 }
 
 function assistAvatarUrl(repoBase, op) {
-  return skinAvatarUrl(repoBase, op.skinId) || avatarUrl(repoBase, op.id || op.charId, op.evolvePhase);
+  return skinAvatarUrl(repoBase, op.skinId) || avatarUrl(repoBase, op.charId, op.evolvePhase);
 }
 
 var _eliteUrlsCache = null;
@@ -150,45 +324,80 @@ async function getEliteUrls() {
     urls[1] = (await Tapp.assets.getUrl('assets/rank/elite1.png')).url;
     urls[2] = (await Tapp.assets.getUrl('assets/rank/elite2.png')).url;
   } catch (e) {
-    urls = {};
+    // urls = {};
+    console.error('Failed to load elite URLs:', e);
   }
   _eliteUrlsCache = urls;
   return urls;
 }
 
 // 助战干员（前 3 个），含名称 / 头像 / 精英化标识；异步（需读取资源仓库地址）
-async function getAssistUnits(data) {
-  var player = (data && data.player) || {};
-  var list = Array.isArray(player.assistChars) ? player.assistChars.slice(0, 3) : [];
+async function getAssistUnits(uid) {
+  var assistChars = getPlayerAssistChars(uid)
+  var list = Array.isArray(assistChars) ? assistChars.slice(0, 3) : [];
   if (!list.length) return [];
-  var charInfoMap = player.charInfoMap || {};
   var repoBase = await getRepoBase();
   var eliteUrls = await getEliteUrls();
   var units = [];
   for (var i = 0; i < list.length; i++) {
     var c = list[i];
-    var id = c.charId;
-    var info = charInfoMap && charInfoMap[id];
+    // var id = c.charId;
+    // var info = getCharInfoMap[id];
     var phase = c.evolvePhase || 0;
     units.push({
-      id: id,
-      name: (info && info.name) || id,
+      id: c.charId,
+      // name: (info && info.name) || id,
       level: c.level,
       evolvePhase: phase,
-      avatarUrl: assistAvatarUrl(repoBase, { id: id, charId: id, skinId: c.skinId, evolvePhase: phase }),
+      avatarUrl: assistAvatarUrl(repoBase, {charId: c.charId, skinId: c.skinId, evolvePhase: phase }),
       eliteUrl: eliteUrls[phase] || ''
     });
   }
   return units;
 }
 
+// ========================================
+// exports
+// ========================================
+
 module.exports = {
   PLAYER_DATA_KEY: PLAYER_DATA_KEY,
+
   t: t,
   applyI18n: applyI18n,
+
+
   countUniqueChars: countUniqueChars,
-  countMedals: countMedals,
-  getPlayerSummary: getPlayerSummary,
+  loadPlayerData: loadPlayerData,
+  setPlayerData: setPlayerData,
+  getDataUpdateTs: getDataUpdateTs,
+
+  getPlayerStatus: getPlayerStatus,
+  getPlayerMedal: getPlayerMedal,
+  getPlayerAssistChars: getPlayerAssistChars,
+  getPlayerChars: getPlayerChars,
+  getPlayerBuilding: getPlayerBuilding,
+  getPlayerRecruit: getPlayerRecruit,
+  getPlayerCampaign: getPlayerCampaign,
+  getPlayerTower: getPlayerTower,
+  getPlayerRogue: getPlayerRogue,
+  getPlayerRoutine: getPlayerRoutine,
+  getPlayerActivity: getPlayerActivity,
+  getCharInfoMap: getCharInfoMap,
+  getSkinInfoMap: getSkinInfoMap,
+  getStageInfoMap: getStageInfoMap,
+  getActivityInfoMap: getActivityInfoMap,
+  getTowerInfoMap: getTowerInfoMap,
+  getRogueInfoMap: getRogueInfoMap,
+  getCampaignInfoMap: getCampaignInfoMap,
+  getCampaignZoneInfoMap: getCampaignZoneInfoMap,
+  getEquipmentInfoMap: getEquipmentInfoMap,
+  getManufactureFormulaInfoMap: getManufactureFormulaInfoMap,
+
+  generatePlayerSummary: generatePlayerSummary,
+
+  getOperatorName: getOperatorName,
+
   isHttpsUrl: isHttpsUrl,
   sanitizeRepoBase: sanitizeRepoBase,
   getRepoBase: getRepoBase,

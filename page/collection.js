@@ -66,21 +66,23 @@
     var assets = window.__arkAssets;
     if (!assets) return;
 
-    Tapp.shared.get(PLAYER_DATA_KEY).then(function (stored) {
-      var player = stored && stored.data && stored.data.player ? stored.data.player : {};
-      return assets.loadAssets().then(function () {
-        assets.setCharInfoMap(player.charInfoMap);
-        renderContent(wrap, player, assets);
-      });
-    }).catch(function () {
-      renderContent(wrap, {}, assets);
-    });
+    // Tapp.shared.get(PLAYER_DATA_KEY).then(function (stored) {
+    //   var player = stored && stored.data && stored.data.player ? stored.data.player : {};
+    //   return assets.loadAssets().then(function () {
+    //     // assets.setCharInfoMap(player.charInfoMap);
+    //     renderContent(wrap, player, assets);
+    //   });
+    // }).catch(function () {
+    //   renderContent(wrap, {}, assets);
+    // });
+
+    renderContent(wrap,null,assets) // TODO
   }
 
-  function renderContent(wrap, player, assets) {
-    var charInfoMap = (player && player.charInfoMap) || {};
-    var skinInfoMap = (player && player.skinInfoMap) || {};
-    var chars = (player && Array.isArray(player.chars)) ? player.chars.slice() : [];
+  function renderContent(wrap, uid, assets) {
+    var charInfoMap = core.getCharInfoMap(uid);
+    var skinInfoMap = core.getSkinInfoMap(uid);
+    var chars = core.getPlayerChars(uid);
 
     var filterState = { professions: [], rarities: [], sortBy: 'rarity' };
     var filterTool = null;

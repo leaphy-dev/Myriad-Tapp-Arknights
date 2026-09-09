@@ -112,13 +112,13 @@
         esc(core.t('assets.noSupport')) + '</div>';
     }
     var html = '<div style="display:flex;gap:' + Math.round(10 * scale) + 'px;justify-content:center;width:100%;">';
-    for (var i = 0; i < units.length; i++) {
+    for (let i = 0; i < units.length; i++) {
       var u = units[i];
       html +=
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;">' +
         buildAvatar(c, scale, Math.round(64 * scale), u.avatarUrl, u.eliteUrl) +
         '<span style="font-size:' + Math.round(11 * fontScale) + 'px;font-weight:600;color:' + c.textMain + ';' +
-        'max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(u.name) + '</span>' +
+        'max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(core.getOperatorName(u.id)) + '</span>' +
         '<span style="font-size:' + Math.round(10 * fontScale) + 'px;color:' + c.textMuted + ';">' +
         esc('LV' + (u.level != null ? u.level : '?')) + '</span>' +
         '</div>';
@@ -241,12 +241,16 @@
     }
 
     return (async function () {
-      var data = null;
-      try {
-        data = await Tapp.shared.get(core.PLAYER_DATA_KEY);
-      } catch (e) {}
+      // var data = null;
+      // try {
+      //   data = await Tapp.shared.get(core.PLAYER_DATA_KEY);
+      // } catch (e) {}
 
-      var dataKey = data && data.data ? String(data.ts || 'no-ts') : 'empty';
+      // var dataKey = data && data.data ? String(data.ts || 'no-ts') : 'empty';
+
+      // Load firstly!!!
+      await core.loadPlayerData(null); // TODO
+      var dataKey = core.getDataUpdateTs(null) //TODO
 
       // 数据未变化且容器已显示对应内容时跳过重建
       if (cache.html && cache.propsKey === propsKey && cache.dataKey === dataKey) {
@@ -259,12 +263,12 @@
 
       cache.propsKey = propsKey;
       cache.dataKey = dataKey;
-
-      if (!data || !data.data) {
+      var summary = core.generatePlayerSummary(null); // TODO
+      if (!summary) {
         cache.html = buildEmpty(c, primary, scale, fontScale);
       } else {
-        var summary = core.getPlayerSummary(data.data);
-        var assist = size === '4x4' ? await core.getAssistUnits(data.data) : [];
+        var assist = size === '4x4' ? await core.getAssistUnits(null) : [];
+
         cache.html = size === '4x4'
           ? buildLarge(c, primary, scale, fontScale, summary, assist, props)
           : buildWide(c, primary, scale, fontScale, summary, props);
