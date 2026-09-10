@@ -140,6 +140,21 @@
         "cred": "{{params.cred}}",
         "sign": "{{params.sign}}"
       }
+    },
+    "sklandGetCredByCode": {
+      "type": "http",
+      "access": "protected",
+      "endpoint": "https://zonai.skland.com/api/v1/user/auth/generate_cred_by_code",
+      "method": "POST",
+      "description": "获取森空岛Cred"
+
+    },
+    "hypergryphOauth2": {
+      "type": "http",
+      "access": "protected",
+      "endpoint": " https://as.hypergryph.com/user/oauth2/v2/grant",
+      "method": "POST",
+      "description": "鹰角网络Oauth,获取授权码"
     }
   }
 }

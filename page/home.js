@@ -142,16 +142,6 @@
     }
   }
 
-  function formatTs(ts) {
-    var d = new Date(Number(ts));
-    if (isNaN(d.getTime())) return '';
-    var m = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    var h = String(d.getHours()).padStart(2, '0');
-    var mi = String(d.getMinutes()).padStart(2, '0');
-    return d.getFullYear() + '-' + m + '-' + day + ' ' + h + ':' + mi;
-  }
-
   function updateRefreshTime(wrap, uid) {
     var el = wrap.querySelector('[data-refresh-time]');
     if (!el) return;
@@ -653,7 +643,7 @@
       renderAccountList(wrap, step2);
       showPage(wrap, 'step2');
     } catch (e) {
-      showError(step, String((e && e.message) || e));
+      showError(step, String(e));
     } finally {
       setButtonLoading(btn, false);
     }
@@ -678,7 +668,7 @@
         nickName: binding.nickName || '',
         channelName: binding.channelName || '',
         player: data
-      })
+      }, binding.uid)
 
     try {
       await Tapp.widget.invalidate('data-ready', { target: { widgetId: 'player-summary' } });
@@ -690,7 +680,7 @@
     var credToken = state.credToken;
     if (!credToken) {
       try {
-      credToken = (await Tapp.storage.get('sklandToken')) || '';
+      credToken = (String(await Tapp.storage.get('sklandToken'))) || '';
       } catch (e) {}
     }
 
@@ -709,14 +699,15 @@
     }
 
     try {
-      var data = {
-        uid: binding.uid,
-        nickName: binding.nickName || '',
-        player: await fetchPlayerData(binding, credToken)
-      }
+      // var data = {
+      //   uid: binding.uid,
+      //   nickName: binding.nickName || '',
+      //   player: await fetchPlayerData(binding, credToken)
+      // }
 
-      core.setPlayerData(data)
-      updateRefreshTime(wrap, { ts: Date.now() });
+      // await core.setPlayerData(data)
+      await fetchPlayerData(binding, credToken)
+      updateRefreshTime(wrap, binding.uid);
       showPage(wrap, 'display');
       
       renderDisplay(wrap, null); //TODO

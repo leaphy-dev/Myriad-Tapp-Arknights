@@ -201,8 +201,8 @@ function getManufactureFormulaInfoMap(uid) {
   return (player && player.manufactureFormulaInfoMap) || {};
 }
 
-function getOperatorName(charId) {
-  var info = getCharInfoMap()[charId];
+function getOperatorName(charId, uid) {
+  var info = getCharInfoMap(uid)[charId];
   var locale = Tapp.i18n.getLocale();
   // console.debug(Tapp.i18n.getLocale())；
   if (locale == "zh-CN"){
@@ -212,10 +212,7 @@ function getOperatorName(charId) {
   }
 }
 
-function countUniqueChars(player) {
-  var chars = player && Array.isArray(player.chars) ? player.chars : [];
-  var charInfoMap = player && player.charInfoMap ? player.charInfoMap : {};
-
+function countUniqueChars(chars, charInfoMap) {
   var seen = new Set();
   for (let i = 0; i < chars.length; i++) {
     let id = chars[i] && chars[i].charId;
@@ -230,15 +227,16 @@ function countUniqueChars(player) {
 
 // 从存储的玩家数据（{ player, nickName, ... }）生成概要，供主页与小组件共用
 function generatePlayerSummary(uid) {
-  var status = getPlayerStatus()
+  var status = getPlayerStatus(uid)
   var name = status.name || '';
   var avatar = (status.avatar && isHttpsUrl(status.avatar.url)) ? status.avatar.url : '';
   var level = status.level !== undefined ? String(status.level) : '';
-  var charCount = countUniqueChars(uid);
+  var charCount = countUniqueChars(getPlayerChars(uid), getCharInfoMap(uid));
   var operators = charCount != null
     ? String(charCount)
     : (status.charCnt !== undefined ? String(status.charCnt) : '-');
   var furnitureNum = getPlayerBuilding(uid)?.furniture?.total;
+  var medalNum = getPlayerMedal(uid)?.total;
   var progress = status.mainStageProgress;
   var progressVal = progress
     ? (typeof progress === 'string' ? progress.replace(/^main_/i, '') : progress)
@@ -255,7 +253,7 @@ function generatePlayerSummary(uid) {
       ['assets.operators', operators],
       ['assets.skins', status.skinCnt !== undefined ? String(status.skinCnt) : '-'],
       ['assets.furniture', furnitureNum !== undefined ? String(furnitureNum) : '-'],
-      ['assets.medals', getPlayerMedal(uid)?.total]
+      ['assets.medals', medalNum !== undefined ? String(medalNum) : '-']
     ]
   };
 }

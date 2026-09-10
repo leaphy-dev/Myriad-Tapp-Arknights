@@ -38,26 +38,37 @@
 
 ```
 .
-├── manifest.json          # Tapp 清单（入口、权限、小组件、API、设置）
-├── core.js                # 共享层：i18n、玩家数据计算、资源 URL 工具
-├── page.html              # 页面模板
-├── styles.css             # 样式（ak-ui 设计语言 + 组件）
+├── manifest.json              # Tapp 清单（入口、权限、小组件、API、设置）
+├── catalog.json               # 商店元数据（简介、标签、预览配置）
+├── core.js                    # 共享层：i18n、玩家数据缓存与读取、资源 URL 工具
+├── core.css                   # 共享样式（ak-ui 设计语言基础）
 ├── page/
-│   ├── index.js           # 入口：路由 + 生命周期 + 资源预热
-│   ├── home.js            # 主页渲染与账号绑定流程
-│   ├── collection.js      # 干员 / 时装图鉴
-│   ├── assets.js          # 卡片 / 助战 / 占位等 DOM 构建
-│   ├── skland.js          # 森空岛接口签名与请求
-│   ├── crypto.js          # 签名加密工具
-│   └── debug.js           # Debug 页（管理员）
+│   ├── index.js               # 入口：路由 + 生命周期 + 资源预热
+│   ├── template.html          # 页面模板
+│   ├── styles.css             # 页面样式
+│   ├── home.js                # 主页渲染与账号绑定流程
+│   ├── collection.js          # 干员 / 时装图鉴
+│   ├── assets.js              # 卡片 / 助战 / 占位等 DOM 构建
+│   ├── skland.js              # 森空岛接口签名与请求
+│   ├── crypto.js              # 签名加密工具（SHA-256 / HMAC / MD5）
+│   └── debug.js               # Debug 页（管理员）
 ├── widget/
-│   └── player-summary.js  # 玩家信息小组件（4x2 / 4x4）
+│   ├── player-summary.js      # 玩家信息小组件（4x2 / 4x4）
+│   └── styles.css             # 小组件样式（亮 / 暗主题变量）
 ├── i18n/
 │   ├── zh-CN.json
 │   └── en-US.json
-├── assets/                # 包内资源（职业 / 精英化 / 潜能 / 星级图标等）
-└── types/                 # Tapp SDK 类型声明
+├── assets/                    # 包内资源（职业 / 精英化 / 潜能 / 星级图标等）
+├── scripts/
+│   └── generate-preview.mjs   # 生成商店预览快照
+├── tests/
+│   └── core.test.js           # core.js 单元测试（node --test）
+└── types/                     # Tapp SDK 类型声明
 ```
+
+> `core.js` 是 Page / Widget / Headless 三模式共用的共享层。玩家数据通过
+> `Tapp.shared` 读取为 `Promise`（`loadPlayerData`），并提供按字段的同步读取函数，
+> 供渲染期直接调用。当前为单用户实现，各读取函数的 `uid` 形参为多用户扩展预留。
 
 ## 版权声明
 
