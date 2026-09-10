@@ -4,6 +4,8 @@
 // Core / 共享层（Widget、Page、Headless 三模式均加载）
 // ========================================
 
+var skland = require('./api/skland.js');
+
 //TODO
 var PLAYER_DATA_KEY = 'arknights.player';
 
@@ -63,7 +65,7 @@ async function setPlayerData(map, uid) {
   _playerDataPromise = Promise.resolve(record);
   await Tapp.shared.set(PLAYER_DATA_KEY, record);
 }
-
+// 以下是api: getPlayerInfo的细分
 function getDataUpdateTs(uid) {
   var data = PLAYER_DATA_CACHE;
   return data?.ts;
@@ -200,6 +202,7 @@ function getManufactureFormulaInfoMap(uid) {
   var player = data && data.data ? data.data.player : null;
   return (player && player.manufactureFormulaInfoMap) || {};
 }
+// end
 
 function getOperatorName(charId, uid) {
   var info = getCharInfoMap(uid)[charId];
@@ -360,6 +363,8 @@ async function getAssistUnits(uid) {
 
 module.exports = {
   PLAYER_DATA_KEY: PLAYER_DATA_KEY,
+
+  skland: skland,
 
   t: t,
   applyI18n: applyI18n,

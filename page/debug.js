@@ -3,6 +3,8 @@
 // ========================================
 
 (function () {
+  var core = require('../core.js');
+
   function initDebug(container) {
     var tokenInput = container.querySelector('[data-debug-token]');
     var endpointSelect = container.querySelector('[data-debug-endpoint]');
@@ -62,7 +64,7 @@
     panel.appendChild(summary);
 
     try {
-      var skland = window.__arkSkland;
+      var skland = core.skland;
       if (!skland) throw new Error('skland module not loaded');
 
       var res;

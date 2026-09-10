@@ -42,6 +42,9 @@
 ├── catalog.json               # 商店元数据（简介、标签、预览配置）
 ├── core.js                    # 共享层：i18n、玩家数据缓存与读取、资源 URL 工具
 ├── core.css                   # 共享样式（ak-ui 设计语言基础）
+├── api/                       # 共享 API 模块（由 core 层加载，供 Page / Headless 复用）
+│   ├── skland.js              # 森空岛接口签名与请求
+│   └── crypto.js              # 签名加密工具（SHA-256 / HMAC / MD5）
 ├── page/
 │   ├── index.js               # 入口：路由 + 生命周期 + 资源预热
 │   ├── template.html          # 页面模板
@@ -49,8 +52,6 @@
 │   ├── home.js                # 主页渲染与账号绑定流程
 │   ├── collection.js          # 干员 / 时装图鉴
 │   ├── assets.js              # 卡片 / 助战 / 占位等 DOM 构建
-│   ├── skland.js              # 森空岛接口签名与请求
-│   ├── crypto.js              # 签名加密工具（SHA-256 / HMAC / MD5）
 │   └── debug.js               # Debug 页（管理员）
 ├── widget/
 │   ├── player-summary.js      # 玩家信息小组件（4x2 / 4x4）
@@ -69,6 +70,9 @@
 > `core.js` 是 Page / Widget / Headless 三模式共用的共享层。玩家数据通过
 > `Tapp.shared` 读取为 `Promise`（`loadPlayerData`），并提供按字段的同步读取函数，
 > 供渲染期直接调用。当前为单用户实现，各读取函数的 `uid` 形参为多用户扩展预留。
+>
+> `api/` 下的森空岛接口与加密工具以 CommonJS 模块提供，由 `core.js` 加载并以
+> `core.skland` 暴露，Page 通过 `core.skland` 调用；后续 Headless 也可直接复用。
 
 ## 版权声明
 

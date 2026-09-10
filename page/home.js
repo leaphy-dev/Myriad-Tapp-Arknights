@@ -609,7 +609,7 @@
   }
 
   async function runBinding(wrap, step, btn) {
-    var skland = window.__arkSkland;
+    var skland = core.skland;
     if (!skland) {
       showError(step, core.t('home.errorModule'));
       return;
@@ -650,7 +650,7 @@
   }
 
   async function fetchPlayerData(binding, credToken) {
-    var skland = window.__arkSkland;
+    var skland = core.skland;
     if (!skland) throw new Error(core.t('home.errorModule'));
     var info = await skland.getPlayerInfo(binding.uid, credToken);
     var data = info && info.data ? info.data : null;
