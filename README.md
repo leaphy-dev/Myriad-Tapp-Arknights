@@ -15,13 +15,11 @@
 
 ## 数据来源
 
-基于森空岛公开接口（`zonai.skland.com`），需要用户提供**鹰角账号 Token** 完成账号绑定：
+基于森空岛公开接口（`zonai.skland.com`），通过**鹰角账号密码**登录完成绑定：
 
-1. 登录森空岛官网后，访问 `https://web-api.skland.com/account/info/hg`，复制 `content` 字段的值（或在该页面控制台执行页面提供的命令自动复制）
-2. 将该账号 Token 粘贴到应用输入框
-3. 应用自动用账号 Token 换取森空岛 `cred` 与**签名 Token**，选择绑定账号并拉取玩家数据
-
-> 注意：账号 Token 不是浏览器 localStorage 里的 `SK_TOKEN_CACHE_KEY`（那是森空岛签名 token，无法换取 cred）。
+1. 在应用内输入鹰角账号的手机号与密码
+2. 应用登录换取鹰角账号 `token`，存入用户私有 `Tapp.storage`（键 `sklandToken`）
+3. 应用用账号 Token 换取森空岛 `cred` 与**签名 Token**，选择绑定账号并拉取玩家数据
 
 干员头像、精英化标识等素材来自可自定义的素材仓库（默认指向 [leaphy-dev/ArknightsGameResource](https://github.com/leaphy-dev/ArknightsGameResource)），可通过设置项 `resourceBaseUrl` 指向自己的 fork。
 
@@ -30,7 +28,7 @@
 玩家数据通过 `Tapp.shared`（键 `arknights.player`）保存为**共享快照**，鹰角账号 `token` 存于用户私有 `Tapp.storage`（键 `sklandToken`）；森空岛 `cred` 与签名 token 由账号 Token 在会话内自动换取，不落盘。
 
 - **管理员**（`Tapp.user.isAdmin()` 为真）：显示右上角「刷新 / 换绑」按钮与页脚 Debug 入口。
-  - 刷新流程：点刷新 → 粘贴账号 `token` → 选择绑定账号 → 拉取并写入共享快照。
+  - 刷新流程：点刷新 → 复用已存账号 `token` 拉取账号列表 → 选择绑定账号 → 拉取并写入共享快照（无 token 时回到登录）。
 - **其他用户**：**只读**。仅展示管理员最近一次写入的共享快照，不显示刷新 / 换绑 / Debug 入口。
 
 > 本应用不会在进入主页时自动静默刷新。共享快照只有在管理员主动刷新后才会更新；

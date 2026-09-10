@@ -17,13 +17,11 @@
     "errorModule": "skland module not loaded",
     "errorNoBinding": "No Arknights account bound. Check that your token is valid.",
     "step1": {
-      "title": "Step 1 · Get account token",
-      "guidePrefix": "Run the command below in the logged-in ",
-      "guideLink": "Skland",
-      "guideSuffix": " console, then paste the account token into the field (or open web-api.skland.com/account/info/hg and copy content).",
-      "copyHint": "Click to copy",
-      "copied": "Copied · Paste it into the Skland console",
-      "errorFormat": "Please enter a valid account token"
+      "title": "Step 1 · Sign in",
+      "phone": "Phone",
+      "password": "Password",
+      "login": "Sign in & bind",
+      "errorEmpty": "Enter your phone and password"
     },
     "step2": {
       "title": "Step 2 · Select account",

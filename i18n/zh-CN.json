@@ -17,13 +17,11 @@
     "errorModule": "skland 模块未加载",
     "errorNoBinding": "未找到明日方舟绑定账号，请检查 Token 是否有效",
     "step1": {
-      "title": "步骤 1 · 获取账号 Token",
-      "guidePrefix": "在已登录的",
-      "guideLink": "森空岛官网",
-      "guideSuffix": "控制台执行下方命令，将获取到的账号 Token 粘贴到输入框（或访问 web-api.skland.com/account/info/hg 复制 content）",
-      "copyHint": "点击复制",
-      "copied": "已复制 · 粘贴到森空岛官网控制台执行",
-      "errorFormat": "请输入有效的账号 Token"
+      "title": "步骤 1 · 登录",
+      "phone": "手机号",
+      "password": "密码",
+      "login": "登录并绑定",
+      "errorEmpty": "请输入手机号和密码"
     },
     "step2": {
       "title": "步骤 2 · 选择账号",

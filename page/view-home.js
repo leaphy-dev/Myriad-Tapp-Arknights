@@ -47,8 +47,17 @@
         '<polyline points="23 4 23 10 17 10"></polyline>' +
         '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' +
       '</svg>';
-    refreshBtn.addEventListener('click', function () {
-      showPage(wrap, 'step1');
+    refreshBtn.addEventListener('click', async function () {
+      var token = state.token;
+      if (!token) {
+        try { token = String((await Tapp.storage.get('sklandToken')) || ''); } catch (e) {}
+      }
+      if (!token) {
+        showPage(wrap, 'step1');
+        return;
+      }
+      state.token = token;
+      runBinding(wrap, wrap.querySelector('[data-page="step1"]'), null);
     });
     if (window.__arkIsAdmin) {
       navRow.appendChild(refreshBtn);
@@ -149,7 +158,7 @@
     el.textContent = t ? core.t('home.refreshTime') + ' ' + t : '';
   }
 
-  // ==================== Step 1 · Token ====================
+  // ==================== Step 1 · 登录 ====================
 
   function buildStep1(wrap) {
     var step = document.createElement('div');
@@ -165,86 +174,23 @@
     label.textContent = core.t('home.step1.title');
     step.appendChild(label);
 
-    var guide = document.createElement('div');
-    guide.setAttribute('style', 'font-size:12px;line-height:1.7;color:var(--ark-text-dim);margin-bottom:12px;');
-    guide.appendChild(document.createTextNode(core.t('home.step1.guidePrefix')));
-
-    var sklandLink = document.createElement('a');
-    sklandLink.setAttribute('href', '#');
-    sklandLink.setAttribute(
-      'style',
-      'color:var(--ak-color-blue);cursor:pointer;text-decoration:underline;'
-    );
-    sklandLink.textContent = core.t('home.step1.guideLink');
-    sklandLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      try {
-        Tapp.ui.openUrl('skland');
-      } catch (err) {}
-    });
-    guide.appendChild(sklandLink);
-
-    guide.appendChild(document.createTextNode(core.t('home.step1.guideSuffix')));
-    step.appendChild(guide);
-
-    var code = document.createElement('div');
-    code.setAttribute('title', core.t('home.step1.copyHint'));
-    code.setAttribute(
-      'style',
-      'font-family:var(--ak-font-mono);font-size:11px;background:var(--ark-fill);padding:8px 10px;border-radius:var(--ak-radius-subtle);' +
-        'word-break:break-all;margin-bottom:12px;color:var(--ark-text);cursor:pointer;' +
-        'transition:background 0.2s ease;user-select:none;'
-    );
-    var CODE_CMD =
-      "fetch('https://web-api.skland.com/account/info/hg',{credentials:'include'}).then(r=>r.json()).then(d=>copy(d.data.content))";
-    code.textContent = CODE_CMD;
-
-    function legacyCopy(text) {
-      var ok = false;
-      try {
-        var ta = document.createElement('textarea');
-        ta.value = text;
-        ta.setAttribute('style', 'position:fixed;left:-9999px;top:0;opacity:0;');
-        document.body.appendChild(ta);
-        ta.select();
-        ok = document.execCommand('copy');
-        ta.remove();
-      } catch (e) {}
-      return ok;
-    }
-
-    var copyTimer = null;
-    code.addEventListener('click', function () {
-      var showCopied = function () {
-        if (copyTimer) clearTimeout(copyTimer);
-        code.textContent = core.t('home.step1.copied');
-        code.style.background = 'rgba(63, 185, 80, 0.25)';
-        copyTimer = setTimeout(function () {
-          code.textContent = CODE_CMD;
-          code.style.background = 'var(--ark-fill)';
-        }, 1600);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(CODE_CMD).then(showCopied, function () {
-          if (legacyCopy(CODE_CMD)) showCopied();
-        });
-      } else if (legacyCopy(CODE_CMD)) {
-        showCopied();
-      }
-    });
-
-    step.appendChild(code);
-
-    var input = document.createElement('input');
-    input.type = 'password';
-    input.setAttribute('autocomplete', 'off');
-    input.setAttribute(
-      'style',
+    var inputStyle =
       'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid var(--ark-border);' +
-        'border-radius:var(--ak-radius-subtle);background:transparent;color:var(--ark-text);'
-    );
-    input.placeholder = 'Token';
-    step.appendChild(input);
+      'border-radius:var(--ak-radius-subtle);background:transparent;color:var(--ark-text);margin-bottom:8px;';
+
+    var phoneInput = document.createElement('input');
+    phoneInput.type = 'tel';
+    phoneInput.setAttribute('autocomplete', 'tel');
+    phoneInput.setAttribute('style', inputStyle);
+    phoneInput.placeholder = core.t('home.step1.phone');
+    step.appendChild(phoneInput);
+
+    var passwordInput = document.createElement('input');
+    passwordInput.type = 'password';
+    passwordInput.setAttribute('autocomplete', 'current-password');
+    passwordInput.setAttribute('style', inputStyle);
+    passwordInput.placeholder = core.t('home.step1.password');
+    step.appendChild(passwordInput);
 
     var navRow = document.createElement('div');
     navRow.setAttribute('style', 'display:flex;justify-content:space-between;gap:8px;margin-top:12px;');
@@ -253,24 +199,31 @@
 
     var nextBtn = document.createElement('button');
     nextBtn.type = 'button';
-    nextBtn.textContent = core.t('common.next');
+    nextBtn.textContent = core.t('home.step1.login');
     nextBtn.setAttribute('class', 'ak-button ak-button--info');
     nextBtn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
     navRow.appendChild(nextBtn);
     step.appendChild(navRow);
 
-    loadSavedToken(input);
-
-    nextBtn.addEventListener('click', function () {
-      var token = input.value.trim();
-      if (!token) {
-        showError(step, core.t('home.step1.errorFormat'));
+    nextBtn.addEventListener('click', async function () {
+      var phone = phoneInput.value.trim();
+      var password = passwordInput.value;
+      if (!phone || !password) {
+        showError(step, core.t('home.step1.errorEmpty'));
         return;
       }
       clearError(step);
-      state.token = token;
-      try { Tapp.storage.set('sklandToken', token); } catch (e) {}
-      runBinding(wrap, step, nextBtn);
+      setButtonLoading(nextBtn, true);
+      try {
+        var token = await core.skland.loginByPassword(phone, password);
+        state.token = token;
+        try { await Tapp.storage.set('sklandToken', token); } catch (e) {}
+        await runBinding(wrap, step, nextBtn);
+      } catch (e) {
+        showError(step, String(e));
+      } finally {
+        setButtonLoading(nextBtn, false);
+      }
     });
 
     wrap.appendChild(step);
@@ -562,13 +515,6 @@
     var m = String(d.getMonth() + 1).padStart(2, '0');
     var day = String(d.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + day;
-  }
-
-  async function loadSavedToken(input) {
-    try {
-      var saved = await Tapp.storage.get('sklandToken');
-      if (saved && typeof saved === 'string') input.value = saved;
-    } catch (e) {}
   }
 
   function showError(step, msg) {

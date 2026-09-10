@@ -1,59 +1,15 @@
 // ========================================
 // Skland API 模块（森空岛接口封装，core 层加载）
-// 每个导出函数对应一个 HTTP 请求
+// 分两层：原始请求（对应 manifest.apis）+ 二次包装（自动换取凭证）
 // ========================================
 
 var crypto = require('./api-crypto.js');
 
 var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0';
 
-// 用鹰角账号 Token 换取森空岛 Cred 与签名 Token：
-//   hgToken --(hypergryphOauth2)--> code --(sklandGetCredByCode)--> { cred, token }
-// 注意：hgToken 是 https://web-api.skland.com/account/info/hg 的 content（鹰角账号 Token），
-// 不是 localStorage 的 SK_TOKEN_CACHE_KEY（那是签名 token，无法换 cred）。
-// 后续请求的 sign 必须使用本流程返回的 data.token，而不是 hgToken。
-async function getCredAndToken(hgToken) {
-  var oauth = await Tapp.api('hypergryphOauth2', { token: hgToken });
-  if (!oauth || oauth.status !== 0 || !oauth.data || !oauth.data.code) {
-    throw new Error('oauth2 grant failed' + (oauth && oauth.msg ? ': ' + oauth.msg : ''));
-  }
-  var timestamp = String(Math.floor(Date.now() / 1000));
-  var res = await Tapp.api('sklandGetCredByCode', {
-    code: oauth.data.code,
-    platform: '3',
-    timestamp: timestamp,
-    dId: UA,
-    vName: '1.2.0'
-  });
-  if (!res || res.code !== 0 || !res.data || !res.data.cred || !res.data.token) {
-    throw new Error('generate cred failed' + (res && res.message ? ': ' + res.message : ''));
-  }
-  return { cred: res.data.cred, token: res.data.token };
-}
-
-// 会话内按 hgToken 缓存 cred 与签名 token，避免每次请求都重新换取
-var _credCache = { hgToken: '', cred: '', token: '' };
-
-async function resolveCreds(hgToken) {
-  if (_credCache.hgToken === hgToken && _credCache.cred && _credCache.token) return _credCache;
-  var c = await getCredAndToken(hgToken);
-  _credCache = { hgToken: hgToken, cred: c.cred, token: c.token };
-  return _credCache;
-}
-
-// 解析凭证：优先参数，其次 storage；storage 只存鹰角账号 token，cred / 签名 token 自动换取
-async function getCreds(userToken) {
-  var hgToken = userToken && typeof userToken === 'string' ? userToken.trim() : '';
-  if (!hgToken) {
-    try {
-      var v = await Tapp.storage.get('sklandToken');
-      if (v && typeof v === 'string') hgToken = v.trim();
-    } catch (e) {}
-  }
-  if (!hgToken) throw new Error('skland token not configured');
-  var c = await resolveCreds(hgToken);
-  return { cred: c.cred, token: c.token };
-}
+// ========================================
+// 原始请求层：一一对应 manifest.apis，只构造请求头并调用 Tapp.api
+// ========================================
 
 function sign(path, params, timestamp, token) {
   var headers = {
@@ -80,9 +36,64 @@ function buildHeaders(path, params, cred, token) {
   };
 }
 
-async function getPlayerBinding(token) {
-  var c = await getCreds(token);
-  var h = buildHeaders('/api/v1/game/player/binding', '', c.cred, c.token);
+// 鹰角：账号密码登录 → 账号 hgToken
+async function loginByPasswordRaw(phone, password) {
+  /*
+  respond:
+    {
+      "status": 0,
+      "type": "A",
+      "msg": "OK",
+      "data": {
+          "token": "xxx"
+      }
+    }
+  */
+  return await Tapp.api('hypergryphLogin', { phone: phone, password: password });
+}
+
+// 鹰角：账号 hgToken → 一次性 OauthCode
+async function grantCodeRaw(hgToken) {
+  /*
+    {
+      "status": 0,
+      "type": "A",
+      "msg": "OK",
+      "data": {
+          "code": "mmKkGqm******************************************************************UjnSamjI9ow==",
+          "uid": "12**********1"
+      }
+    }
+  */
+  return await Tapp.api('hypergryphOauth2', { token: hgToken });
+}
+
+// 森空岛：一次性 OauthCode → 会话cred + 会话token
+async function getCredAndTokenRaw(code) {
+  /*
+    {
+        "code": 0,
+        "message": "OK",
+        "timestamp": "1713614395",
+        "data": {
+            "cred": "********************************",
+            "userId": "8****3",
+            "token": "********************************"
+        }
+    }
+  */
+  return await Tapp.api('sklandGetCredByCode', {
+    code: code,
+    platform: '3',
+    timestamp: String(Math.floor(Date.now() / 1000)),
+    dId: UA,
+    vName: '1.2.0'
+  });
+}
+
+// 森空岛：获取玩家账户绑定
+async function getPlayerBindingRaw(cred, token) {
+  var h = buildHeaders('/api/v1/game/player/binding', '', cred, token);
   return await Tapp.api('sklandPlayerBinding', {
     platform: h.platform,
     timestamp: h.timestamp,
@@ -93,7 +104,9 @@ async function getPlayerBinding(token) {
   });
 }
 
-/**
+// 森空岛：一次性 OauthCode → 会话cred + 会话token
+async function getPlayerInfoRaw(uid, cred, token) {
+  /**
  * 获取玩家信息。
  *
  * 返回 JSON（森空岛统一包装）：
@@ -240,10 +253,8 @@ async function getPlayerBinding(token) {
  *   }
  * }
  */
-async function getPlayerInfo(uid, token) {
   var query = 'uid=' + uid;
-  var c = await getCreds(token);
-  var h = buildHeaders('/api/v1/game/player/info', query, c.cred, c.token);
+  var h = buildHeaders('/api/v1/game/player/info', query, cred, token);
   return await Tapp.api('sklandPlayerInfo', {
     uid: uid,
     platform: h.platform,
@@ -255,10 +266,10 @@ async function getPlayerInfo(uid, token) {
   });
 }
 
-async function getCultivate(uid, token) {
+// 森空岛：一次性 OauthCode → 会话cred + 会话token
+async function getCultivateRaw(uid, cred, token) {
   var query = 'uid=' + uid;
-  var c = await getCreds(token);
-  var h = buildHeaders('/api/v1/game/cultivate/player', query, c.cred, c.token);
+  var h = buildHeaders('/api/v1/game/cultivate/player', query, cred, token);
   return await Tapp.api('sklandCultivate', {
     uid: uid,
     platform: h.platform,
@@ -270,9 +281,122 @@ async function getCultivate(uid, token) {
   });
 }
 
+// 森空岛：校验 cred 有效性
+async function checkCredRaw(cred) {
+  return await Tapp.api('sklandCheckCred', { cred: cred });
+}
+
+// ========================================
+// 二次包装：自动换取 cred / 签名 token 后调用原始请求
+// ========================================
+
+// 账号密码登录 → 账号 HgToken
+async function loginByPassword(phone, password) {
+  var res = await loginByPasswordRaw(phone, password);
+  if (!res || res.status !== 0 || !res.data || !res.data.token) {
+    throw new Error('login failed' + (res && res.msg ? ': ' + res.msg : ''));
+  }
+  return res.data.token;
+}
+
+// 会话凭证缓存：hgToken → { cred, token, expireAt }；未过期直接复用，过期后重新换取
+var CRED_CACHE_TTL_MS = 30 * 60 * 1000;
+var _credCache = new Map();
+
+//账号 HgToken → 会话CredAndToken
+async function getCredAndTokenByHgToken(hgToken) {
+  var cached = _credCache.get(hgToken);
+  if (cached && Date.now() < cached.expireAt) {
+    return { cred: cached.cred, token: cached.token };
+  }
+
+  // 换取新的会话 cred + 签名 token
+  var oauth = await grantCodeRaw(hgToken);
+  if (!oauth || oauth.status !== 0 || !oauth.data || !oauth.data.code) {
+    throw new Error('oauth2 grant failed' + (oauth && oauth.msg ? ': ' + oauth.msg : ''));
+  }
+
+  var res = await getCredAndTokenRaw(oauth.data.code);
+  if (!res || res.code !== 0 || !res.data || !res.data.cred || !res.data.token) {
+    throw new Error('generate cred failed' + (res && res.message ? ': ' + res.message : ''));
+  }
+
+  _credCache.set(hgToken, {
+    cred: res.data.cred,
+    token: res.data.token,
+    expireAt: Date.now() + CRED_CACHE_TTL_MS
+  });
+  return { cred: res.data.cred, token: res.data.token };
+}
+
+// 业务调用：凭证失效（返回码或异常）时，强制刷新凭证并重试一次
+async function withCredRetry(hgToken, run) {
+  var c = await getCredAndTokenByHgToken(hgToken);
+  try {
+    var first = await run(c.cred, c.token);
+    var isFirstAuthFail = !!first && (
+      first.code === 10000 ||
+      first.code === 10002 ||
+      /登录|过期|expired|unauthor/i.test(String(first.message || first.msg || ''))
+    );
+    if (!isFirstAuthFail) return first;
+  } catch (e) {
+    var em = String(e);
+    if (!/HTTP 401|10000|10002|登录|过期|expired|unauthor/i.test(em)) throw e;
+  }
+
+  _credCache.delete(hgToken);
+  c = await getCredAndTokenByHgToken(hgToken);
+  var second = await run(c.cred, c.token);
+  var isSecondAuthFail = !!second && (
+    second.code === 10000 ||
+    second.code === 10002 ||
+    /登录|过期|expired|unauthor/i.test(String(second.message || second.msg || ''))
+  );
+  if (isSecondAuthFail) {
+    throw new Error((second && (second.message || second.msg)) || 'cred invalid after refresh');
+  }
+  return second;
+}
+
+async function getPlayerBinding(hgToken) {
+  return await withCredRetry(hgToken, function (cred, token) {
+    return getPlayerBindingRaw(cred, token);
+  });
+}
+
+async function getPlayerInfo(uid, hgToken) {
+  return await withCredRetry(hgToken, function (cred, token) {
+    return getPlayerInfoRaw(uid, cred, token);
+  });
+}
+
+async function getCultivate(uid, hgToken) {
+  return await withCredRetry(hgToken, function (cred, token) {
+    return getCultivateRaw(uid, cred, token);
+  });
+}
+
+async function checkCred(hgToken) {
+  var c = await getCredAndTokenByHgToken(hgToken);
+  return await checkCredRaw(c.cred);
+}
+
 module.exports = {
-  getCredAndToken: getCredAndToken,
+  // 原始请求
+  loginByPasswordRaw: loginByPasswordRaw,
+  grantCodeRaw: grantCodeRaw,
+  getCredAndTokenRaw: getCredAndTokenRaw,
+  getPlayerBindingRaw: getPlayerBindingRaw,
+  getPlayerInfoRaw: getPlayerInfoRaw,
+  getCultivateRaw: getCultivateRaw,
+  checkCredRaw: checkCredRaw,
+
+  // 二次包装
+  loginByPassword: loginByPassword,
+  getCredAndTokenByHgToken: getCredAndTokenByHgToken,
   getPlayerBinding: getPlayerBinding,
   getPlayerInfo: getPlayerInfo,
   getCultivate: getCultivate,
+  checkCred: checkCred
 };
