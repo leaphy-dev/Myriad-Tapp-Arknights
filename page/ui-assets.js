@@ -21,6 +21,7 @@
     var el = document.createElement('span');
     el.setAttribute('class', 'ak-card__title');
     var sq = document.createElement('span');
+    sq.setAttribute('class', 'ark-card-title__sq');
     sq.setAttribute('style', 'width:8px;height:8px;background:var(--ak-color-blue);flex-shrink:0;box-sizing:border-box;');
     el.appendChild(sq);
     el.appendChild(document.createTextNode(text));

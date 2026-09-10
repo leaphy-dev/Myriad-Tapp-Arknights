@@ -31,6 +31,11 @@
     "step2": {
       "title": "Step 2 · Select account",
       "empty": "No accounts available"
+    },
+    "notice": {
+      "code": "CAUTION",
+      "title": "Caution",
+      "message": "Your Hypergryph account credential is the sole credential used by the Hypergryph account system to verify your sign-in, and the identity basis for all Hypergryph API interactions. Leaking a login credential is extremely dangerous. For your account security, never share this credential with anyone in any form."
     }
   },
   "playerList": {

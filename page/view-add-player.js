@@ -47,6 +47,65 @@
 
     buildStep1(wrap);
     buildStep2(wrap);
+    buildNotice(wrap);
+
+    // 弹簧：把页脚推到底部；页脚作为视图直接子级，不受表单列宽度限制
+    var spacer = document.createElement('div');
+    spacer.setAttribute('class', 'ark-add-spacer');
+    section.appendChild(spacer);
+
+    buildFooter(section);
+  }
+
+  // 登录凭证安全告警（位于步骤卡片下方、页脚上方）
+  function buildNotice(wrap) {
+    var stack = document.createElement('div');
+    stack.setAttribute('class', 'ak-notice-stack');
+    stack.setAttribute('style', 'margin-top:16px;');
+
+    var notice = document.createElement('aside');
+    notice.setAttribute('class', 'ak-notice ak-notice--warning');
+    notice.setAttribute('role', 'status');
+
+    var code = document.createElement('span');
+    code.setAttribute('class', 'ak-notice__code');
+    code.textContent = core.t('addPlayer.notice.code');
+
+    var body = document.createElement('div');
+    body.setAttribute('class', 'ak-notice__body');
+
+    var title = document.createElement('strong');
+    title.setAttribute('class', 'ak-notice__title');
+    title.textContent = core.t('addPlayer.notice.title');
+
+    var message = document.createElement('p');
+    message.setAttribute('class', 'ak-notice__message');
+    message.textContent = core.t('addPlayer.notice.message');
+
+    body.appendChild(title);
+    body.appendChild(message);
+    notice.appendChild(code);
+    notice.appendChild(body);
+    stack.appendChild(notice);
+    wrap.appendChild(stack);
+  }
+
+  // 页脚：名称版本 + 版权说明（直接挂在视图上，不受表单列宽度限制）
+  function buildFooter(parent) {
+    var footer = document.createElement('footer');
+    footer.setAttribute('class', 'ark-app-footer');
+
+    var verLine = document.createElement('div');
+    var copyLine = document.createElement('div');
+    copyLine.textContent = core.t('footer.copyright');
+    footer.appendChild(verLine);
+    footer.appendChild(copyLine);
+    parent.appendChild(footer);
+
+    try {
+      var info = Tapp.lifecycle.getInfo();
+      verLine.textContent = core.t('title') + ' · v' + (info && info.version ? info.version : '');
+    } catch (e) {}
   }
 
   function showPage(wrap, name) {

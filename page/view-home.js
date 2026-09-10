@@ -25,7 +25,25 @@
     loading.setAttribute('class', 'ark-page-loading');
     loading.setAttribute('role', 'status');
     loading.setAttribute('aria-label', core.t('home.loading'));
-    loading.innerHTML = '<div class="ak-loading" style="--ak-loading-color:var(--ak-text-primary);"></div>';
+
+    var loader = document.createElement('div');
+    loader.setAttribute('class', 'ark-page-loader');
+
+    var spinner = document.createElement('div');
+    spinner.setAttribute('class', 'ak-loading');
+    spinner.setAttribute('style', '--ak-loading-size:28px;--ak-loading-border:4px;');
+
+    var loaderLabel = document.createElement('div');
+    loaderLabel.setAttribute('class', 'ark-page-loader__label');
+    loaderLabel.textContent = core.t('home.loading');
+
+    var loaderBar = document.createElement('div');
+    loaderBar.setAttribute('class', 'ark-page-loader__bar');
+
+    loader.appendChild(spinner);
+    loader.appendChild(loaderLabel);
+    loader.appendChild(loaderBar);
+    loading.appendChild(loader);
     homeSection.appendChild(loading);
 
     var navRow = document.createElement('div');
@@ -43,12 +61,12 @@
 
     var refreshBtn = document.createElement('button');
     refreshBtn.type = 'button';
-    refreshBtn.setAttribute('class', 'ak-button ak-button--fab ak-fx--skew-left');
+    refreshBtn.setAttribute('class', 'ak-button ak-button--fab ak-fx--skew-left ark-refresh-btn');
     refreshBtn.setAttribute('data-refresh-btn', '1');
     refreshBtn.setAttribute('aria-label', core.t('home.refresh'));
     refreshBtn.setAttribute('title', core.t('home.refresh'));
     refreshBtn.innerHTML =
-      '<svg class="ak-fx--skew-right" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<svg class="ak-fx--skew-right" data-refresh-icon aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<polyline points="23 4 23 10 17 10"></polyline>' +
         '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' +
       '</svg>';
@@ -114,20 +132,22 @@
   }
 
   async function initView(wrap) {
+    var loading = wrap.parentNode.querySelector('.ark-page-loading');
     try {
+      // isAdmin 已在 index.js onReady 取得，直接用缓存值，省一次权限查询
+      var admin = !!window.__arkIsAdmin;
+      // lastViewed 与玩家列表并行读取
+      var lastP = core.getLastViewedUid();
       var map = await core.getPlayerMap();
       if (!map || !Object.keys(map).length) {
-        var admin = false;
-        try { admin = !!(await Tapp.user.isAdmin()); } catch (e) {}
         if (admin) navigate('addPlayer');
         else showNoData(wrap);
       } else {
-        var lastUid = await core.getLastViewedUid();
+        var lastUid = await lastP;
         var entry = core.pickPlayerEntry(map, lastUid);
         await showPlayer(wrap, entry);
       }
     } finally {
-      var loading = wrap.parentNode.querySelector('.ark-page-loading');
       if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
     }
   }
@@ -197,6 +217,16 @@
     return token || '';
   }
 
+  // 刷新中状态：按钮图标旋转 + 展示区顶部扫描条
+  function setRefreshing(wrap, btn, on) {
+    var page = wrap.querySelector('[data-page="display"]');
+    if (page) page.classList.toggle('ark-refreshing', !!on);
+    if (!btn) return;
+    btn.disabled = !!on;
+    if (on) btn.setAttribute('aria-busy', 'true');
+    else btn.removeAttribute('aria-busy');
+  }
+
   // 刷新当前浏览玩家；仅 token 失效才回登录页
   async function refreshCurrent(wrap, btn) {
     var uid = state.currentUid;
@@ -205,17 +235,18 @@
     var hgToken = await getStoredToken();
     if (!hgToken) { navigate('addPlayer'); return; }
 
-    if (btn) btn.disabled = true;
+    setRefreshing(wrap, btn, true);
     try {
-      var map = await core.getStoragePlayerMap();
-      var prev = map[uid] || {};
+      // 名称 / 区服沿用当前展示缓存，省一次玩家列表读取
+      var prev = core.getPlayerData(uid) || {};
+      var prevData = prev.data || {};
       var info = await core.skland.getPlayerInfo(uid, hgToken);
       var record = {
         ts: Date.now(),
         data: {
           uid: uid,
-          nickName: prev.name || '',
-          channelName: prev.platform || '',
+          nickName: prevData.nickName || '',
+          channelName: prevData.channelName || '',
           player: (info && info.data) || null
         }
       };
@@ -228,7 +259,7 @@
         showError(wrap.querySelector('[data-page="display"]'), String((e && e.message) || e));
       }
     } finally {
-      if (btn) btn.disabled = false;
+      setRefreshing(wrap, btn, false);
     }
   }
 

@@ -52,7 +52,7 @@
 │   ├── ui-assets.js           # 卡片 / 助战 / 占位等 DOM 构建
 │   ├── view-home.js           # 主页渲染
 │   ├── view-player-list.js    # 玩家列表（公开开关 / 默认展示）
-│   ├── view-add-player.js     # 添加玩家（登录 + 选择账号）
+│   ├── view-add-player.js     # 添加玩家（登录 + 选择账号；凭证安全告警 + 页脚版权）
 │   ├── view-collection.js     # 干员 / 时装图鉴
 │   └── view-debug.js          # Debug 页（管理员）
 ├── widget/
