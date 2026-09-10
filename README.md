@@ -15,20 +15,22 @@
 
 ## 数据来源
 
-基于森空岛公开接口（`zonai.skland.com`），需要用户提供 `cred,token` 完成账号绑定：
+基于森空岛公开接口（`zonai.skland.com`），需要用户提供**鹰角账号 Token** 完成账号绑定：
 
-1. 在已登录的森空岛官网控制台执行脚本获取 `cred` 与 `token`
-2. 将 `cred,token` 粘贴到应用输入框
-3. 应用自动选择绑定账号并拉取玩家数据
+1. 登录森空岛官网后，访问 `https://web-api.skland.com/account/info/hg`，复制 `content` 字段的值（或在该页面控制台执行页面提供的命令自动复制）
+2. 将该账号 Token 粘贴到应用输入框
+3. 应用自动用账号 Token 换取森空岛 `cred` 与**签名 Token**，选择绑定账号并拉取玩家数据
+
+> 注意：账号 Token 不是浏览器 localStorage 里的 `SK_TOKEN_CACHE_KEY`（那是森空岛签名 token，无法换取 cred）。
 
 干员头像、精英化标识等素材来自可自定义的素材仓库（默认指向 [leaphy-dev/ArknightsGameResource](https://github.com/leaphy-dev/ArknightsGameResource)），可通过设置项 `resourceBaseUrl` 指向自己的 fork。
 
 ## 权限与共享展示
 
-玩家数据通过 `Tapp.shared`（键 `arknights.player`）保存为**共享快照**，绑定凭据（`cred,token`）则存于用户私有 `Tapp.storage`（键 `sklandToken`）。
+玩家数据通过 `Tapp.shared`（键 `arknights.player`）保存为**共享快照**，鹰角账号 `token` 存于用户私有 `Tapp.storage`（键 `sklandToken`）；森空岛 `cred` 与签名 token 由账号 Token 在会话内自动换取，不落盘。
 
 - **管理员**（`Tapp.user.isAdmin()` 为真）：显示右上角「刷新 / 换绑」按钮与页脚 Debug 入口。
-  - 刷新流程：点刷新 → 粘贴 `cred,token` → 选择绑定账号 → 拉取并写入共享快照。
+  - 刷新流程：点刷新 → 粘贴账号 `token` → 选择绑定账号 → 拉取并写入共享快照。
 - **其他用户**：**只读**。仅展示管理员最近一次写入的共享快照，不显示刷新 / 换绑 / Debug 入口。
 
 > 本应用不会在进入主页时自动静默刷新。共享快照只有在管理员主动刷新后才会更新；
@@ -42,17 +44,16 @@
 ├── catalog.json               # 商店元数据（简介、标签、预览配置）
 ├── core.js                    # 共享层：i18n、玩家数据缓存与读取、资源 URL 工具
 ├── core.css                   # 共享样式（ak-ui 设计语言基础）
-├── api/                       # 共享 API 模块（由 core 层加载，供 Page / Headless 复用）
-│   ├── skland.js              # 森空岛接口签名与请求
-│   └── crypto.js              # 签名加密工具（SHA-256 / HMAC / MD5）
 ├── page/
 │   ├── index.js               # 入口：路由 + 生命周期 + 资源预热
 │   ├── template.html          # 页面模板
 │   ├── styles.css             # 页面样式
-│   ├── home.js                # 主页渲染与账号绑定流程
-│   ├── collection.js          # 干员 / 时装图鉴
-│   ├── assets.js              # 卡片 / 助战 / 占位等 DOM 构建
-│   └── debug.js               # Debug 页（管理员）
+│   ├── api-skland.js          # 森空岛接口签名与请求（core 加载的共享模块）
+│   ├── api-crypto.js          # 签名加密工具（SHA-256 / HMAC / MD5）
+│   ├── ui-assets.js           # 卡片 / 助战 / 占位等 DOM 构建
+│   ├── view-home.js           # 主页渲染与账号绑定流程
+│   ├── view-collection.js     # 干员 / 时装图鉴
+│   └── view-debug.js          # Debug 页（管理员）
 ├── widget/
 │   ├── player-summary.js      # 玩家信息小组件（4x2 / 4x4）
 │   └── styles.css             # 小组件样式（亮 / 暗主题变量）
@@ -71,8 +72,12 @@
 > `Tapp.shared` 读取为 `Promise`（`loadPlayerData`），并提供按字段的同步读取函数，
 > 供渲染期直接调用。当前为单用户实现，各读取函数的 `uid` 形参为多用户扩展预留。
 >
-> `api/` 下的森空岛接口与加密工具以 CommonJS 模块提供，由 `core.js` 加载并以
-> `core.skland` 暴露，Page 通过 `core.skland` 调用；后续 Headless 也可直接复用。
+> 森空岛接口与加密工具（`page/api-skland.js`、`page/api-crypto.js`）以 CommonJS 模块提供，
+> 由 `core.js` require 并以 `core.skland` 暴露（平台仅收录 `page/` 下的额外 JS），
+> Page 通过 `core.skland` 调用；后续 Headless 也可直接复用。
+>
+> `page/` 内无法建子目录，故用文件名前缀分类：`api-`（接口/加密）、`ui-`（DOM 构建）、
+> `view-`（视图渲染）。
 
 ## 版权声明
 

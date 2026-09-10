@@ -146,15 +146,34 @@
       "access": "protected",
       "endpoint": "https://zonai.skland.com/api/v1/user/auth/generate_cred_by_code",
       "method": "POST",
-      "description": "获取森空岛Cred"
-
+      "description": "用授权码换取森空岛 Cred 与签名 Token",
+      "headers": {
+        "Content-Type": "application/json",
+        "platform": "{{params.platform}}",
+        "timestamp": "{{params.timestamp}}",
+        "dId": "{{params.dId}}",
+        "vName": "{{params.vName}}"
+      },
+      "body": {
+        "kind": 1,
+        "code": "{{params.code}}"
+      }
     },
     "hypergryphOauth2": {
       "type": "http",
       "access": "protected",
-      "endpoint": " https://as.hypergryph.com/user/oauth2/v2/grant",
+      "endpoint": "https://as.hypergryph.com/user/oauth2/v2/grant",
       "method": "POST",
-      "description": "鹰角网络Oauth,获取授权码"
+      "description": "鹰角网络 OAuth2，用账号 Token 换取授权码",
+      "headers": {
+        "User-Agent": "Skland/1.5.1 (com.hypergryph.skland; build:100501001; Android 34; ) Okhttp/4.11.0",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "token": "{{params.token}}",
+        "appCode": "4ca99fa6b56cc2ba",
+        "type": 0
+      }
     }
   }
 }

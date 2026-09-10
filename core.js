@@ -4,7 +4,9 @@
 // Core / 共享层（Widget、Page、Headless 三模式均加载）
 // ========================================
 
-var skland = require('./api/skland.js');
+// 平台只收录 page/ 下的额外 JS（见 tapp-cli 打包规则），故共享 API 模块置于 page/，
+// 由 core 层 require 加载，Page / Headless 共用。
+var skland = require('./page/api-skland.js');
 
 //TODO
 var PLAYER_DATA_KEY = 'arknights.player';

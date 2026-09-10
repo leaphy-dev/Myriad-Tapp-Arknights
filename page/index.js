@@ -5,10 +5,10 @@
 var core = require('../core.js');
 
 // 加载页面模块（IIFE 模式，执行后挂载到全局）
-require('./assets.js');
-require('./home.js');
-require('./collection.js');
-require('./debug.js');
+require('./ui-assets.js');
+require('./view-home.js');
+require('./view-collection.js');
+require('./view-debug.js');
 
 (function () {
   var currentTheme = 'light';

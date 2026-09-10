@@ -6,7 +6,7 @@
   var core = require('../core.js');
   var PLAYER_DATA_KEY = 'arknights.player';
   var state = {
-    credToken: '',
+    token: '',
     binds: []
   };
 
@@ -196,7 +196,7 @@
         'transition:background 0.2s ease;user-select:none;'
     );
     var CODE_CMD =
-      "copy(localStorage.getItem('SK_OAUTH_CRED_KEY')+','+localStorage.getItem('SK_TOKEN_CACHE_KEY'))";
+      "fetch('https://web-api.skland.com/account/info/hg',{credentials:'include'}).then(r=>r.json()).then(d=>copy(d.data.content))";
     code.textContent = CODE_CMD;
 
     function legacyCopy(text) {
@@ -243,7 +243,7 @@
       'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid var(--ark-border);' +
         'border-radius:var(--ak-radius-subtle);background:transparent;color:var(--ark-text);'
     );
-    input.placeholder = 'cred,token';
+    input.placeholder = 'Token';
     step.appendChild(input);
 
     var navRow = document.createElement('div');
@@ -262,14 +262,14 @@
     loadSavedToken(input);
 
     nextBtn.addEventListener('click', function () {
-      var credToken = input.value.trim();
-      if (credToken.indexOf(',') === -1) {
+      var token = input.value.trim();
+      if (!token) {
         showError(step, core.t('home.step1.errorFormat'));
         return;
       }
       clearError(step);
-      state.credToken = credToken;
-      try { Tapp.storage.set('sklandToken', credToken); } catch (e) {}
+      state.token = token;
+      try { Tapp.storage.set('sklandToken', token); } catch (e) {}
       runBinding(wrap, step, nextBtn);
     });
 
@@ -617,7 +617,7 @@
 
     setButtonLoading(btn, true);
     try {
-      var bindingRes = await skland.getPlayerBinding(state.credToken);
+      var bindingRes = await skland.getPlayerBinding(state.token);
       var list = bindingRes && bindingRes.data && bindingRes.data.list;
 
       var ak = null;
@@ -649,10 +649,10 @@
     }
   }
 
-  async function fetchPlayerData(binding, credToken) {
+  async function fetchPlayerData(binding, token) {
     var skland = core.skland;
     if (!skland) throw new Error(core.t('home.errorModule'));
-    var info = await skland.getPlayerInfo(binding.uid, credToken);
+    var info = await skland.getPlayerInfo(binding.uid, token);
     var data = info && info.data ? info.data : null;
     // await Tapp.shared.set(PLAYER_DATA_KEY, {
     //   ts: Date.now(),
@@ -677,10 +677,10 @@
   }
 
   async function selectAccount(wrap, binding, btn) {
-    var credToken = state.credToken;
-    if (!credToken) {
+    var token = state.token;
+    if (!token) {
       try {
-      credToken = (String(await Tapp.storage.get('sklandToken'))) || '';
+      token = (String(await Tapp.storage.get('sklandToken'))) || '';
       } catch (e) {}
     }
 
@@ -706,7 +706,7 @@
       // }
 
       // await core.setPlayerData(data)
-      await fetchPlayerData(binding, credToken)
+      await fetchPlayerData(binding, token)
       updateRefreshTime(wrap, binding.uid);
       showPage(wrap, 'display');
       

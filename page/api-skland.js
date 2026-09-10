@@ -1,27 +1,58 @@
 // ========================================
-// Skland 页面模块（森空岛 API 封装）
+// Skland API 模块（森空岛接口封装，core 层加载）
 // 每个导出函数对应一个 HTTP 请求
 // ========================================
 
-var crypto = require('./crypto.js');
+var crypto = require('./api-crypto.js');
 
 var UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0';
 
-async function getCreds(credToken) {
-  var saved = '';
-  if (credToken && typeof credToken === 'string' && credToken.indexOf(',') !== -1) {
-    saved = credToken;
-  } else {
+// 用鹰角账号 Token 换取森空岛 Cred 与签名 Token：
+//   hgToken --(hypergryphOauth2)--> code --(sklandGetCredByCode)--> { cred, token }
+// 注意：hgToken 是 https://web-api.skland.com/account/info/hg 的 content（鹰角账号 Token），
+// 不是 localStorage 的 SK_TOKEN_CACHE_KEY（那是签名 token，无法换 cred）。
+// 后续请求的 sign 必须使用本流程返回的 data.token，而不是 hgToken。
+async function getCredAndToken(hgToken) {
+  var oauth = await Tapp.api('hypergryphOauth2', { token: hgToken });
+  if (!oauth || oauth.status !== 0 || !oauth.data || !oauth.data.code) {
+    throw new Error('oauth2 grant failed' + (oauth && oauth.msg ? ': ' + oauth.msg : ''));
+  }
+  var timestamp = String(Math.floor(Date.now() / 1000));
+  var res = await Tapp.api('sklandGetCredByCode', {
+    code: oauth.data.code,
+    platform: '3',
+    timestamp: timestamp,
+    dId: UA,
+    vName: '1.2.0'
+  });
+  if (!res || res.code !== 0 || !res.data || !res.data.cred || !res.data.token) {
+    throw new Error('generate cred failed' + (res && res.message ? ': ' + res.message : ''));
+  }
+  return { cred: res.data.cred, token: res.data.token };
+}
+
+// 会话内按 hgToken 缓存 cred 与签名 token，避免每次请求都重新换取
+var _credCache = { hgToken: '', cred: '', token: '' };
+
+async function resolveCreds(hgToken) {
+  if (_credCache.hgToken === hgToken && _credCache.cred && _credCache.token) return _credCache;
+  var c = await getCredAndToken(hgToken);
+  _credCache = { hgToken: hgToken, cred: c.cred, token: c.token };
+  return _credCache;
+}
+
+// 解析凭证：优先参数，其次 storage；storage 只存鹰角账号 token，cred / 签名 token 自动换取
+async function getCreds(userToken) {
+  var hgToken = userToken && typeof userToken === 'string' ? userToken.trim() : '';
+  if (!hgToken) {
     try {
       var v = await Tapp.storage.get('sklandToken');
-      if (v && typeof v === 'string') saved = v;
+      if (v && typeof v === 'string') hgToken = v.trim();
     } catch (e) {}
   }
-  var parts = saved.split(',');
-  if (parts.length < 2) {
-    throw new Error('skland token not configured');
-  }
-  return { cred: parts[0].trim(), token: parts[1].trim() };
+  if (!hgToken) throw new Error('skland token not configured');
+  var c = await resolveCreds(hgToken);
+  return { cred: c.cred, token: c.token };
 }
 
 function sign(path, params, timestamp, token) {
@@ -49,8 +80,8 @@ function buildHeaders(path, params, cred, token) {
   };
 }
 
-async function getPlayerBinding(credToken) {
-  var c = await getCreds(credToken);
+async function getPlayerBinding(token) {
+  var c = await getCreds(token);
   var h = buildHeaders('/api/v1/game/player/binding', '', c.cred, c.token);
   return await Tapp.api('sklandPlayerBinding', {
     platform: h.platform,
@@ -209,9 +240,9 @@ async function getPlayerBinding(credToken) {
  *   }
  * }
  */
-async function getPlayerInfo(uid, credToken) {
+async function getPlayerInfo(uid, token) {
   var query = 'uid=' + uid;
-  var c = await getCreds(credToken);
+  var c = await getCreds(token);
   var h = buildHeaders('/api/v1/game/player/info', query, c.cred, c.token);
   return await Tapp.api('sklandPlayerInfo', {
     uid: uid,
@@ -224,9 +255,9 @@ async function getPlayerInfo(uid, credToken) {
   });
 }
 
-async function getCultivate(uid, credToken) {
+async function getCultivate(uid, token) {
   var query = 'uid=' + uid;
-  var c = await getCreds(credToken);
+  var c = await getCreds(token);
   var h = buildHeaders('/api/v1/game/cultivate/player', query, c.cred, c.token);
   return await Tapp.api('sklandCultivate', {
     uid: uid,
@@ -240,6 +271,7 @@ async function getCultivate(uid, credToken) {
 }
 
 module.exports = {
+  getCredAndToken: getCredAndToken,
   getPlayerBinding: getPlayerBinding,
   getPlayerInfo: getPlayerInfo,
   getCultivate: getCultivate,
