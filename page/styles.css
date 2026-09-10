@@ -55,7 +55,9 @@ html.dark {
 
 /* AnimatedView 外层：min-h-screen + pt-20 + px-4/sm:px-6 + pb-24/md:pb-12 */
 .home-view,
-.collection-view {
+.collection-view,
+.player-list-view,
+.add-player-view {
   width: 100%;
   box-sizing: border-box;
   min-height: 100vh;
@@ -67,7 +69,9 @@ html.dark {
 
 /* 装饰纹样与页面遮罩均仅用于暗色模式（decoration/decorator_dark.png、page_mask_dark.png） */
 html.dark .home-view,
-html.dark .collection-view {
+html.dark .collection-view,
+html.dark .player-list-view,
+html.dark .add-player-view {
   background-image: var(--page-mask, none), var(--page-decorator, none);
   background-size: cover, auto;
   background-repeat: no-repeat, repeat;
@@ -76,7 +80,8 @@ html.dark .collection-view {
 
 @media (min-width: 640px) {
   .home-view,
-  .collection-view {
+  .collection-view,
+  .player-list-view {
     padding-left: 24px;
     padding-right: 24px;
   }
@@ -84,7 +89,8 @@ html.dark .collection-view {
 
 @media (min-width: 768px) {
   .home-view,
-  .collection-view {
+  .collection-view,
+  .player-list-view {
     padding-bottom: 48px;
   }
 }
@@ -773,5 +779,238 @@ html.dark {
 
   .operator-handbook-item-wrapper:hover {
     transform: none;
+  }
+}
+
+/* ========================================
+   No Player Data / 空数据占位（非管理员）
+   ======================================== */
+
+.ark-no-data {
+  flex: 1;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ak-text-secondary);
+  font-family: var(--ak-font-mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ========================================
+   Player List / 玩家列表（ak-ui system）
+   ======================================== */
+
+.ark-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ark-player-list-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--ak-text-secondary);
+  font-family: var(--ak-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+[data-ak-ui] .ark-player-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: var(--ark-panel);
+  border-left: var(--ak-line-strong) solid var(--ak-signal-accent);
+}
+
+.ark-player-card__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ark-player-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ark-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ark-player-card__meta {
+  font-size: 11px;
+  color: var(--ak-text-secondary);
+  word-break: break-all;
+}
+
+.ark-player-card__controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+/* 添加玩家：列表底部加号卡片（管理员） */
+[data-ak-ui] .ark-player-add {
+  justify-content: center;
+  min-height: 56px;
+  cursor: pointer;
+  background: transparent;
+  border-style: dashed;
+  color: var(--ak-text-secondary);
+}
+
+[data-ak-ui] .ark-player-add:hover:not(:disabled) {
+  color: var(--ak-text);
+  border-color: var(--ak-signal-accent);
+}
+
+.ark-player-add__plus {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 300;
+}
+
+/* 开关：showPublic */
+.ark-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ark-switch[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ark-switch__input,
+.ark-radio__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ark-switch__track {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--ark-fill);
+  border: var(--ak-line-hairline) solid var(--ark-border-strong);
+  transition:
+    background var(--ak-motion-fast) var(--ak-ease-standard),
+    border-color var(--ak-motion-fast) var(--ak-ease-standard);
+}
+
+.ark-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--ak-text-secondary);
+  transition:
+    transform var(--ak-motion-fast) var(--ak-ease-standard),
+    background var(--ak-motion-fast) var(--ak-ease-standard);
+}
+
+.ark-switch__input:checked + .ark-switch__track {
+  background: color-mix(in srgb, var(--ak-signal-success) 30%, transparent);
+  border-color: var(--ak-signal-success);
+}
+
+.ark-switch__input:checked + .ark-switch__track .ark-switch__thumb {
+  transform: translateX(18px);
+  background: var(--ak-signal-success);
+}
+
+.ark-switch__input:focus-visible + .ark-switch__track {
+  outline: var(--ak-focus-width) solid var(--ak-focus-color);
+  outline-offset: var(--ak-focus-offset);
+}
+
+.ark-switch__label,
+.ark-radio__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ark-text);
+  font-family: var(--ak-font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* 单选：默认展示 */
+.ark-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ark-radio[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.ark-radio__dot {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: var(--ak-line-hairline) solid var(--ark-border-strong);
+  border-radius: 50%;
+  transition: border-color var(--ak-motion-fast) var(--ak-ease-standard);
+}
+
+.ark-radio__input:checked + .ark-radio__dot {
+  border-color: var(--ak-signal-action);
+}
+
+.ark-radio__input:checked + .ark-radio__dot::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--ak-signal-action);
+}
+
+.ark-radio__input:focus-visible + .ark-radio__dot {
+  outline: var(--ak-focus-width) solid var(--ak-focus-color);
+  outline-offset: var(--ak-focus-offset);
+}
+
+@media (max-width: 480px) {
+  [data-ak-ui] .ark-player-card {
+    align-items: flex-start;
+  }
+
+  .ark-player-card__controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ark-switch__track,
+  .ark-switch__thumb,
+  .ark-radio__dot {
+    transition: none;
   }
 }

@@ -20,9 +20,9 @@ globalThis.Tapp = {
 
 const core = require('../core.js');
 
-// 写入一份玩家数据（同时填充内存缓存与桩存储）
+// 写入一份玩家数据（填充按 uid 索引的内存缓存）
 async function seed(playerMap) {
-  await core.setPlayerData(playerMap, 'uid-test');
+  core.setActivePlayer('uid-test', { ts: Date.now(), data: playerMap });
 }
 
 test('sanitizeRepoBase: accepts valid https URLs', () => {

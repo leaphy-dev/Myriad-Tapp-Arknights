@@ -4,11 +4,13 @@
 
 (function () {
   var core = require('../core.js');
-  var PLAYER_DATA_KEY = 'arknights.player';
   var state = {
-    token: '',
-    binds: []
+    currentUid: ''
   };
+
+  function navigate(name) {
+    if (typeof window.__arkNavigate === 'function') window.__arkNavigate(name);
+  }
 
   function render(container) {
     var homeSection = container.querySelector('[data-view="home"]');
@@ -28,13 +30,16 @@
 
     var navRow = document.createElement('div');
     navRow.setAttribute('class', 'ark-page-nav');
-    navRow.setAttribute('style', 'display:flex;align-items:center;justify-content:space-between;');
+    navRow.setAttribute('style', 'display:flex;align-items:center;justify-content:space-between;gap:8px;');
 
     var title = document.createElement('h1');
     title.setAttribute('class', 'ark-page-title');
     title.setAttribute('style', 'font-size:20px;font-weight:600;margin:0;color:var(--ark-text);');
     title.textContent = core.t('title');
     navRow.appendChild(title);
+
+    var btnGroup = document.createElement('div');
+    btnGroup.setAttribute('style', 'display:flex;align-items:center;gap:8px;');
 
     var refreshBtn = document.createElement('button');
     refreshBtn.type = 'button';
@@ -47,26 +52,33 @@
         '<polyline points="23 4 23 10 17 10"></polyline>' +
         '<path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>' +
       '</svg>';
-    refreshBtn.addEventListener('click', async function () {
-      var token = state.token;
-      if (!token) {
-        try { token = String((await Tapp.storage.get('sklandToken')) || ''); } catch (e) {}
-      }
-      if (!token) {
-        showPage(wrap, 'step1');
-        return;
-      }
-      state.token = token;
-      runBinding(wrap, wrap.querySelector('[data-page="step1"]'), null);
+    refreshBtn.addEventListener('click', function () {
+      refreshCurrent(wrap, refreshBtn);
     });
     if (window.__arkIsAdmin) {
-      navRow.appendChild(refreshBtn);
+      btnGroup.appendChild(refreshBtn);
     }
 
+    var listBtn = document.createElement('button');
+    listBtn.type = 'button';
+    listBtn.setAttribute('class', 'ak-button ak-button--fab ak-fx--skew-left');
+    listBtn.setAttribute('data-nav', 'playerList');
+    listBtn.setAttribute('aria-label', core.t('home.playerList'));
+    listBtn.setAttribute('title', core.t('home.playerList'));
+    listBtn.innerHTML =
+      '<svg class="ak-fx--skew-right" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<line x1="8" y1="6" x2="21" y2="6"></line>' +
+        '<line x1="8" y1="12" x2="21" y2="12"></line>' +
+        '<line x1="8" y1="18" x2="21" y2="18"></line>' +
+        '<line x1="3" y1="6" x2="3.01" y2="6"></line>' +
+        '<line x1="3" y1="12" x2="3.01" y2="12"></line>' +
+        '<line x1="3" y1="18" x2="3.01" y2="18"></line>' +
+      '</svg>';
+    btnGroup.appendChild(listBtn);
+
+    navRow.appendChild(btnGroup);
     wrap.appendChild(navRow);
 
-    buildStep1(wrap);
-    buildStep2(wrap);
     buildDisplay(wrap);
 
     // 页脚：debug 按钮（仅管理员，位于版权文字上方）+ 名称版本 + 版权说明
@@ -102,204 +114,121 @@
   }
 
   async function initView(wrap) {
-    var stored = null;
-    stored = await core.loadPlayerData()
-    updateRefreshTime(wrap, stored);
-
-    if (stored && stored.data && stored.data.player) {
-      showPage(wrap, 'display');
-      renderDisplay(wrap, null); //TODO
-    } else {
-      showPage(wrap, 'step1');
+    try {
+      var map = await core.getPlayerMap();
+      if (!map || !Object.keys(map).length) {
+        var admin = false;
+        try { admin = !!(await Tapp.user.isAdmin()); } catch (e) {}
+        if (admin) navigate('addPlayer');
+        else showNoData(wrap);
+      } else {
+        var lastUid = await core.getLastViewedUid();
+        var entry = core.pickPlayerEntry(map, lastUid);
+        await showPlayer(wrap, entry);
+      }
+    } finally {
+      var loading = wrap.parentNode.querySelector('.ark-page-loading');
+      if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
     }
-
-    var loading = wrap.parentNode.querySelector('.ark-page-loading');
-    if (loading && loading.parentNode) loading.parentNode.removeChild(loading);
   }
 
   function showPage(wrap, name) {
     var pages = {
-      step1: wrap.querySelector('[data-page="step1"]'),
-      step2: wrap.querySelector('[data-page="step2"]'),
       display: wrap.querySelector('[data-page="display"]')
     };
     for (var key in pages) {
-      if (pages[key]) pages[key].style.display = key === name ? (key === 'display' ? 'flex' : 'block') : 'none';
+      if (pages[key]) pages[key].style.display = key === name ? 'flex' : 'none';
     }
     var refreshBtn = wrap.querySelector('[data-refresh-btn]');
     if (refreshBtn) refreshBtn.style.display = name === 'display' ? '' : 'none';
   }
 
-  function makeCancelBtn(wrap) {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = core.t('common.cancel');
-    btn.setAttribute('class', 'ak-button ak-button--ghost');
-    btn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
-    btn.addEventListener('click', function () {
-      cancelRefresh(wrap);
-    });
-    return btn;
+  function formatDateTime(ts) {
+    var d = new Date(Number(ts));
+    if (isNaN(d.getTime())) return '';
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    var hh = String(d.getHours()).padStart(2, '0');
+    var mm = String(d.getMinutes()).padStart(2, '0');
+    return y + '-' + m + '-' + day + ' ' + hh + ':' + mm;
   }
 
-  async function cancelRefresh(wrap) {
-    var stored = null;
-    stored = await core.loadPlayerData(null)
-    if (stored) {
-      renderDisplay(wrap, null); //TODO
-      showPage(wrap, 'display');
-    }
-  }
-
-  function updateRefreshTime(wrap, uid) {
+  function updateRefreshTime(wrap, entry) {
     var el = wrap.querySelector('[data-refresh-time]');
     if (!el) return;
-    var t = core.getDataUpdateTs(uid);
-    el.textContent = t ? core.t('home.refreshTime') + ' ' + t : '';
+    var ts = entry && entry.lastUpdate ? entry.lastUpdate : core.getDataUpdateTs(entry && entry.uid);
+    el.textContent = ts ? core.t('home.refreshTime') + ' ' + formatDateTime(ts) : '';
   }
 
-  // ==================== Step 1 · 登录 ====================
-
-  function buildStep1(wrap) {
-    var step = document.createElement('div');
-    step.setAttribute('data-page', 'step1');
-    step.setAttribute('class', 'ak-cut-tr ak-surface');
-    step.setAttribute(
-      'style',
-      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:0;display:none;'
-    );
-
-    var label = document.createElement('div');
-    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:var(--ark-text);');
-    label.textContent = core.t('home.step1.title');
-    step.appendChild(label);
-
-    var inputStyle =
-      'width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px;border:1px solid var(--ark-border);' +
-      'border-radius:var(--ak-radius-subtle);background:transparent;color:var(--ark-text);margin-bottom:8px;';
-
-    var phoneInput = document.createElement('input');
-    phoneInput.type = 'tel';
-    phoneInput.setAttribute('autocomplete', 'tel');
-    phoneInput.setAttribute('style', inputStyle);
-    phoneInput.placeholder = core.t('home.step1.phone');
-    step.appendChild(phoneInput);
-
-    var passwordInput = document.createElement('input');
-    passwordInput.type = 'password';
-    passwordInput.setAttribute('autocomplete', 'current-password');
-    passwordInput.setAttribute('style', inputStyle);
-    passwordInput.placeholder = core.t('home.step1.password');
-    step.appendChild(passwordInput);
-
-    var navRow = document.createElement('div');
-    navRow.setAttribute('style', 'display:flex;justify-content:space-between;gap:8px;margin-top:12px;');
-
-    navRow.appendChild(makeCancelBtn(wrap));
-
-    var nextBtn = document.createElement('button');
-    nextBtn.type = 'button';
-    nextBtn.textContent = core.t('home.step1.login');
-    nextBtn.setAttribute('class', 'ak-button ak-button--info');
-    nextBtn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
-    navRow.appendChild(nextBtn);
-    step.appendChild(navRow);
-
-    nextBtn.addEventListener('click', async function () {
-      var phone = phoneInput.value.trim();
-      var password = passwordInput.value;
-      if (!phone || !password) {
-        showError(step, core.t('home.step1.errorEmpty'));
-        return;
-      }
-      clearError(step);
-      setButtonLoading(nextBtn, true);
-      try {
-        var token = await core.skland.loginByPassword(phone, password);
-        state.token = token;
-        try { await Tapp.storage.set('sklandToken', token); } catch (e) {}
-        await runBinding(wrap, step, nextBtn);
-      } catch (e) {
-        showError(step, String(e));
-      } finally {
-        setButtonLoading(nextBtn, false);
-      }
-    });
-
-    wrap.appendChild(step);
-  }
-
-  // ==================== Step 2 · 选择账号 ====================
-
-  function buildStep2(wrap) {
-    var step = document.createElement('div');
-    step.setAttribute('data-page', 'step2');
-    step.setAttribute('class', 'ak-cut-tr ak-surface');
-    step.setAttribute(
-      'style',
-      'margin-top:20px;padding:16px;border:1px solid var(--ark-border-strong);border-radius:0;display:none;'
-    );
-
-    var label = document.createElement('div');
-    label.setAttribute('style', 'font-size:14px;font-weight:600;margin-bottom:8px;color:var(--ark-text);');
-    label.textContent = core.t('home.step2.title');
-    step.appendChild(label);
-
-    var listBox = document.createElement('div');
-    listBox.setAttribute('data-account-list', '1');
-    step.appendChild(listBox);
-
-    var navRow = document.createElement('div');
-    navRow.setAttribute('style', 'display:flex;justify-content:space-between;gap:8px;margin-top:12px;');
-
-    var prevBtn = document.createElement('button');
-    prevBtn.type = 'button';
-    prevBtn.textContent = core.t('common.prev');
-    prevBtn.setAttribute('class', 'ak-button ak-button--ghost');
-    prevBtn.setAttribute('style', 'padding:8px 18px;font-size:13px;cursor:pointer;');
-    prevBtn.addEventListener('click', function () {
-      showPage(wrap, 'step1');
-    });
-    navRow.appendChild(prevBtn);
-
-    navRow.appendChild(makeCancelBtn(wrap));
-
-    step.appendChild(navRow);
-    wrap.appendChild(step);
-  }
-
-  function renderAccountList(wrap, step) {
-    var listBox = step.querySelector('[data-account-list]');
-    if (!listBox) return;
-    listBox.innerHTML = '';
-
-    if (!state.binds.length) {
-      listBox.textContent = core.t('home.step2.empty');
+  // 展示指定玩家：写入当前展示缓存 + 记录 lastViewed
+  async function showPlayer(wrap, entry) {
+    if (!entry) {
+      navigate('addPlayer');
       return;
     }
+    state.currentUid = entry.uid;
+    core.setActivePlayer(entry.uid, entry.playerdata || null);
+    await core.setLastViewedUid(entry.uid);
+    updateRefreshTime(wrap, entry);
+    showPage(wrap, 'display');
+    renderDisplay(wrap, entry.uid);
+  }
 
-    for (var i = 0; i < state.binds.length; i++) {
-      (
-      /**
-       * @param {{ nickName?: string, channelName?: string, uid?: string }} b
-       */
-      function (b) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        var name = b.nickName || core.t('common.unknown');
-        var channel = b.channelName || '';
-        btn.textContent = name + '(' + channel + ') UID:' + b.uid;
-        btn.setAttribute('class', 'ak-button ak-button--ghost');
-        btn.setAttribute(
-          'style',
-          'display:block;width:100%;text-align:left;margin-top:6px;padding:10px 12px;font-size:13px;cursor:pointer;'
-        );
-        btn.addEventListener('click', function () {
-          if (btn.disabled) return;
-          selectAccount(wrap, b, btn);
-        });
-        listBox.appendChild(btn);
-      })(state.binds[i]);
+  // 非管理员：无公开数据时居中提示
+  function showNoData(wrap) {
+    var page = wrap.querySelector('[data-page="display"]');
+    var content = page.querySelector('[data-display-content]');
+    if (content) {
+      content.innerHTML = '';
+      var box = document.createElement('div');
+      box.setAttribute('class', 'ark-no-data');
+      box.textContent = core.t('home.noPlayerData');
+      content.appendChild(box);
+    }
+    var rt = wrap.querySelector('[data-refresh-time]');
+    if (rt) rt.textContent = '';
+    showPage(wrap, 'display');
+  }
+
+  async function getStoredToken() {
+    var token = '';
+    try { token = String((await Tapp.storage.get('hgToken')) || ''); } catch (e) {}
+    return token || '';
+  }
+
+  // 刷新当前浏览玩家；仅 token 失效才回登录页
+  async function refreshCurrent(wrap, btn) {
+    var uid = state.currentUid;
+    if (!uid) { initView(wrap); return; }
+
+    var hgToken = await getStoredToken();
+    if (!hgToken) { navigate('addPlayer'); return; }
+
+    if (btn) btn.disabled = true;
+    try {
+      var map = await core.getStoragePlayerMap();
+      var prev = map[uid] || {};
+      var info = await core.skland.getPlayerInfo(uid, hgToken);
+      var record = {
+        ts: Date.now(),
+        data: {
+          uid: uid,
+          nickName: prev.name || '',
+          channelName: prev.platform || '',
+          player: (info && info.data) || null
+        }
+      };
+      var entry = await core.updatePlayerData(uid, record);
+      await showPlayer(wrap, entry || { uid: uid, playerdata: record, lastUpdate: record.ts });
+    } catch (e) {
+      if (e && e.authError) {
+        navigate('addPlayer');
+      } else {
+        showError(wrap.querySelector('[data-page="display"]'), String((e && e.message) || e));
+      }
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
@@ -456,8 +385,8 @@
 
     assets.loadAssets().then(function () {
     // assets.setCharInfoMap(player.charInfoMap);
-    assistPlaceholder.replaceWith(assets.buildAssistUnit(assists));
-    myCharsPlaceholder.replaceWith(assets.buildMyChars(core.getPlayerChars(), core.getCharInfoMap()));
+    assistPlaceholder.replaceWith(assets.buildAssistUnit(assists, uid));
+    myCharsPlaceholder.replaceWith(assets.buildMyChars(core.getPlayerChars(uid), core.getCharInfoMap(uid), uid));
     }).catch(function (error) {
       console.error('加载资源失败:', error);
       
@@ -470,7 +399,7 @@
       
       // 添加重试按钮
       var retryBtn = document.createElement('button');
-      retryBtn.textContent = '重试';
+      retryBtn.textContent = 'retry';
       retryBtn.setAttribute('style', 'margin-top:8px;padding:4px 12px;cursor:pointer;');
       retryBtn.onclick = function() {
         location.reload();
@@ -525,149 +454,6 @@
     err.setAttribute('style', 'margin-top:8px;font-size:12px;color:var(--ak-signal-danger);');
     err.textContent = msg;
     step.appendChild(err);
-  }
-
-  function clearError(step) {
-    var old = step.querySelector('[data-step-error]');
-    if (old) old.remove();
-  }
-
-  function setButtonLoading(btn, loading) {
-    if (!btn) return;
-    if (loading) {
-      if (btn._loading) return;
-      btn._loading = true;
-      btn._origText = btn.textContent;
-      btn.disabled = true;
-      var sp = document.createElement('span');
-      sp.setAttribute('class', 'ak-loading');
-      sp.setAttribute(
-        'style',
-        'display:inline-block;vertical-align:middle;--ak-loading-size:14px;--ak-loading-border:3px;--ak-loading-color:currentColor;'
-      );
-      btn.textContent = '';
-      btn.appendChild(sp);
-    } else {
-      btn._loading = false;
-      btn.disabled = false;
-      btn.textContent = btn._origText || '';
-    }
-  }
-
-  async function runBinding(wrap, step, btn) {
-    var skland = core.skland;
-    if (!skland) {
-      showError(step, core.t('home.errorModule'));
-      return;
-    }
-
-    setButtonLoading(btn, true);
-    try {
-      var bindingRes = await skland.getPlayerBinding(state.token);
-      var list = bindingRes && bindingRes.data && bindingRes.data.list;
-
-      var ak = null;
-      if (Array.isArray(list)) {
-        for (var i = 0; i < list.length; i++) {
-          if (list[i].appCode === 'arknights') { ak = list[i]; break; }
-        }
-      }
-
-      var binds = ak && Array.isArray(ak.bindingList) ? ak.bindingList : [];
-      if (!binds.length) {
-        showError(step, core.t('home.errorNoBinding'));
-        return;
-      }
-
-      state.binds = binds;
-      if (binds.length === 1) {
-        await selectAccount(wrap, binds[0]);
-        return;
-      }
-
-      var step2 = wrap.querySelector('[data-page="step2"]');
-      renderAccountList(wrap, step2);
-      showPage(wrap, 'step2');
-    } catch (e) {
-      showError(step, String(e));
-    } finally {
-      setButtonLoading(btn, false);
-    }
-  }
-
-  async function fetchPlayerData(binding, token) {
-    var skland = core.skland;
-    if (!skland) throw new Error(core.t('home.errorModule'));
-    var info = await skland.getPlayerInfo(binding.uid, token);
-    var data = info && info.data ? info.data : null;
-    // await Tapp.shared.set(PLAYER_DATA_KEY, {
-    //   ts: Date.now(),
-    // data: {
-    //   uid: binding.uid,
-    //   nickName: binding.nickName || '',
-    //   channelName: binding.channelName || '',
-    //   player: data
-    // }
-    // });
-    await core.setPlayerData({
-        uid: binding.uid,
-        nickName: binding.nickName || '',
-        channelName: binding.channelName || '',
-        player: data
-      }, binding.uid)
-
-    try {
-      await Tapp.widget.invalidate('data-ready', { target: { widgetId: 'player-summary' } });
-    } catch (e) {}
-    return data;
-  }
-
-  async function selectAccount(wrap, binding, btn) {
-    var token = state.token;
-    if (!token) {
-      try {
-      token = (String(await Tapp.storage.get('sklandToken'))) || '';
-      } catch (e) {}
-    }
-
-    var listBox = wrap.querySelector('[data-account-list]');
-    var siblings = [];
-    if (listBox && btn) {
-      siblings = listBox.querySelectorAll('button');
-    }
-
-    setButtonLoading(btn, true);
-    for (var i = 0; i < siblings.length; i++) {
-      if (siblings[i] !== btn) {
-        siblings[i].disabled = true;
-        siblings[i].style.opacity = '0.6';
-      }
-    }
-
-    try {
-      // var data = {
-      //   uid: binding.uid,
-      //   nickName: binding.nickName || '',
-      //   player: await fetchPlayerData(binding, credToken)
-      // }
-
-      // await core.setPlayerData(data)
-      await fetchPlayerData(binding, token)
-      updateRefreshTime(wrap, binding.uid);
-      showPage(wrap, 'display');
-      
-      renderDisplay(wrap, null); //TODO
-    } catch (e) {
-      showError(wrap.querySelector('[data-page="step2"]'), String(e));
-    } finally {
-      setButtonLoading(btn, false);
-      for (var j = 0; j < siblings.length; j++) {
-        if (siblings[j] !== btn) {
-          siblings[j].disabled = false;
-          siblings[j].style.opacity = '';
-        }
-      }
-    }
   }
 
   Tapp.pages['home'] = {

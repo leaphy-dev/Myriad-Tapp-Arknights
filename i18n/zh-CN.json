@@ -11,9 +11,14 @@
   "home": {
     "refresh": "刷新数据",
     "refreshTime": "更新于",
+    "playerList": "玩家列表",
+    "noPlayerData": "No Player Data",
     "loading": "加载中",
     "enroll": "入职日",
-    "loadFail": "资源加载失败",
+    "loadFail": "资源加载失败"
+  },
+  "addPlayer": {
+    "title": "添加玩家",
     "errorModule": "skland 模块未加载",
     "errorNoBinding": "未找到明日方舟绑定账号，请检查 Token 是否有效",
     "step1": {
@@ -27,6 +32,15 @@
       "title": "步骤 2 · 选择账号",
       "empty": "无可用账号"
     }
+  },
+  "playerList": {
+    "title": "玩家列表",
+    "add": "添加玩家",
+    "view": "查看",
+    "showPublic": "公开",
+    "default": "默认展示",
+    "empty": "暂无玩家",
+    "updated": "更新于"
   },
   "collection": {
     "title": "我的方舟",
@@ -59,7 +73,9 @@
     "skinTodoSuffix": " 个皮肤）"
   },
   "widget": {
-    "empty": "暂无玩家数据，请在应用页面绑定账号"
+    "empty": "暂无玩家数据，请在应用页面绑定账号",
+    "noAccess": "无权访问该玩家",
+    "notFound": "账户不存在"
   },
   "footer": {
     "copyright": "Tapp 所涉及的公司名称、商标、产品等均为其各自所有者的资产，仅供识别。Tapp 内使用的游戏图片、动画、音频、文本原文，仅用于更好地表现游戏资料，其版权属于 Arknights / 上海鹰角网络科技有限公司"

@@ -11,9 +11,14 @@
   "home": {
     "refresh": "Refresh",
     "refreshTime": "UPDATED",
+    "playerList": "Players",
+    "noPlayerData": "No Player Data",
     "loading": "Loading",
     "enroll": "Enlisted",
-    "loadFail": "Failed to load assets",
+    "loadFail": "Failed to load assets"
+  },
+  "addPlayer": {
+    "title": "Add player",
     "errorModule": "skland module not loaded",
     "errorNoBinding": "No Arknights account bound. Check that your token is valid.",
     "step1": {
@@ -27,6 +32,15 @@
       "title": "Step 2 · Select account",
       "empty": "No accounts available"
     }
+  },
+  "playerList": {
+    "title": "Player List",
+    "add": "Add player",
+    "view": "View",
+    "showPublic": "Public",
+    "default": "Default",
+    "empty": "No players",
+    "updated": "Updated"
   },
   "collection": {
     "title": "My Arknights",
@@ -59,7 +73,9 @@
     "skinTodoSuffix": " skins)"
   },
   "widget": {
-    "empty": "No player data. Bind an account in the app."
+    "empty": "No player data. Bind an account in the app.",
+    "noAccess": "No access to this player",
+    "notFound": "Player not found"
   },
   "footer": {
     "copyright": "All company names, trademarks, and products mentioned are the property of their respective owners and are used for identification only. Game images, animations, audio, and original text used in this Tapp are provided solely to better present game data; their copyright belongs to Arknights / Shanghai Hypergryph Network Technology Co., Ltd."

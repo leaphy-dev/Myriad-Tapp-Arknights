@@ -37,7 +37,7 @@
   async function loadSavedToken(input) {
     if (!input) return;
     try {
-      var saved = await Tapp.storage.get('sklandToken');
+      var saved = await Tapp.storage.get('hgToken');
       if (saved && typeof saved === 'string') {
         input.value = saved;
       }

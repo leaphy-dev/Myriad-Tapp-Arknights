@@ -313,7 +313,9 @@ async function getCredAndTokenByHgToken(hgToken) {
   // 换取新的会话 cred + 签名 token
   var oauth = await grantCodeRaw(hgToken);
   if (!oauth || oauth.status !== 0 || !oauth.data || !oauth.data.code) {
-    throw new Error('oauth2 grant failed' + (oauth && oauth.msg ? ': ' + oauth.msg : ''));
+    var oauthErr = new Error('oauth2 grant failed' + (oauth && oauth.msg ? ': ' + oauth.msg : ''));
+    oauthErr.authError = true;
+    throw oauthErr;
   }
 
   var res = await getCredAndTokenRaw(oauth.data.code);
@@ -354,7 +356,9 @@ async function withCredRetry(hgToken, run) {
     /登录|过期|expired|unauthor/i.test(String(second.message || second.msg || ''))
   );
   if (isSecondAuthFail) {
-    throw new Error((second && (second.message || second.msg)) || 'cred invalid after refresh');
+    var authErr = new Error((second && (second.message || second.msg)) || 'cred invalid after refresh');
+    authErr.authError = true;
+    throw authErr;
   }
   return second;
 }

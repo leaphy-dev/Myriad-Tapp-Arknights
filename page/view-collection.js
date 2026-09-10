@@ -4,7 +4,6 @@
 
 (function () {
   var core = require('../core.js');
-  var PLAYER_DATA_KEY = 'arknights.player';
 
   var PROFESSIONS = ['pioneer', 'warrior', 'tank', 'sniper', 'caster', 'medic', 'support', 'special'];
   var RARITY_OPTIONS = [
@@ -35,7 +34,7 @@
     return s;
   }
 
-  function render(container) {
+  async function render(container) {
     var section = container.querySelector('[data-view="collection"]');
     if (!section) return;
     section.innerHTML = '';
@@ -66,17 +65,13 @@
     var assets = window.__arkAssets;
     if (!assets) return;
 
-    // Tapp.shared.get(PLAYER_DATA_KEY).then(function (stored) {
-    //   var player = stored && stored.data && stored.data.player ? stored.data.player : {};
-    //   return assets.loadAssets().then(function () {
-    //     // assets.setCharInfoMap(player.charInfoMap);
-    //     renderContent(wrap, player, assets);
-    //   });
-    // }).catch(function () {
-    //   renderContent(wrap, {}, assets);
-    // });
-
-    renderContent(wrap,null,assets) // TODO
+    var uid = await core.getLastViewedUid();
+    if (!uid) {
+      var map = await core.getPlayerMap();
+      var entry = core.pickPlayerEntry(map, '');
+      uid = entry ? entry.uid : '';
+    }
+    renderContent(wrap, uid, assets);
   }
 
   function renderContent(wrap, uid, assets) {
@@ -106,7 +101,7 @@
     tabBar.appendChild(indicator);
     wrap.appendChild(tabBar);
 
-    var charPanel = renderCharPanel(chars, charInfoMap, assets, filterState);
+    var charPanel = renderCharPanel(chars, charInfoMap, assets, filterState, uid);
     var skinPanel = renderSkinPanel(skinInfoMap);
     wrap.appendChild(charPanel);
     wrap.appendChild(skinPanel);
@@ -140,7 +135,7 @@
     setActiveTab('char');
 
     filterTool = buildFilterTool(assets, filterState, function () {
-      var newPanel = renderCharPanel(chars, charInfoMap, assets, filterState);
+      var newPanel = renderCharPanel(chars, charInfoMap, assets, filterState, uid);
       charPanel.replaceWith(newPanel);
       charPanel = newPanel;
       if (skinPanel.style.display !== 'none') newPanel.style.display = 'none';
@@ -306,7 +301,7 @@
     return container;
   }
 
-  function renderCharPanel(chars, charInfoMap, assets, filterState) {
+  function renderCharPanel(chars, charInfoMap, assets, filterState, uid) {
     var panel = document.createElement('div');
 
     var list = chars.slice();
@@ -342,7 +337,7 @@
     var cards = [];
     for (var j = 0; j < list.length; j++) {
       var info = charInfoMap[list[j].charId];
-      var card = assets.buildCharCard(list[j], info);
+      var card = assets.buildCharCard(list[j], info, uid);
       grid.appendChild(card);
       cards.push(card);
     }

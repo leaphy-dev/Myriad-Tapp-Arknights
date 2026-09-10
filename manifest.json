@@ -29,6 +29,16 @@
       "category": "utility",
       "entry": "widget/player-summary.js",
       "styles": "widget/styles.css",
+      "settings": [
+        {
+          "key": "uid",
+          "type": "input",
+          "label": "玩家 UID",
+          "description": "指定本卡片展示的玩家 UID；留空则自动展示默认 / 上次浏览的玩家。",
+          "placeholder": "玩家 UID",
+          "defaultValue": ""
+        }
+      ],
       "refreshPolicy": {
         "mode": "event",
         "refreshOnVisible": false

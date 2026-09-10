@@ -146,8 +146,8 @@
     return 'white';
   }
 
-  function buildOperatorAvatar(op) {
-    var info = core.getCharInfoMap()[op.id];
+  function buildOperatorAvatar(op, uid) {
+    var info = core.getCharInfoMap(uid)[op.id];
     var rarity = info && info.rarity != null ? info.rarity : 0;
 
     var wrap = document.createElement('div');
@@ -226,7 +226,7 @@
     return wrap;
   }
 
-  function buildAssistUnit(assistList) {
+  function buildAssistUnit(assistList, uid) {
     var list = Array.isArray(assistList) ? assistList.slice(0, 3) : [];
 
     var wrap = document.createElement('div');
@@ -272,7 +272,7 @@
       var unit = document.createElement('div');
       unit.setAttribute('style', 'display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:0;');
 
-      var avatar = buildOperatorAvatar(op);
+      var avatar = buildOperatorAvatar(op, uid);
       unit.appendChild(avatar);
 
       var name = document.createElement('div');
@@ -281,7 +281,7 @@
         'font-size:10px;color:var(--ark-text-muted);max-width:calc(var(--assist-avatar) + 8px);' +
           'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'
       );
-      name.textContent = core.getOperatorName(op.id);
+      name.textContent = core.getOperatorName(op.id, uid);
       unit.appendChild(name);
 
       row.appendChild(unit);
@@ -291,7 +291,7 @@
     return wrap;
   }
 
-  function buildMyChars(chars, charInfoMap) {
+  function buildMyChars(chars, charInfoMap, uid) {
     var list = Array.isArray(chars) ? chars.slice() : [];
     list.sort(function (a, b) {
       var infoA = charInfoMap && charInfoMap[a.charId];
@@ -372,7 +372,7 @@
 
     for (var i = 0; i < list.length; i++) {
       var info = charInfoMap && charInfoMap[list[i].charId];
-      var card = buildCharCard(list[i], info);
+      var card = buildCharCard(list[i], info, uid);
       grid.appendChild(card);
       (function (c, delay) {
         setTimeout(function () {
@@ -385,7 +385,7 @@
     return wrap;
   }
 
-  function buildCharCard(char, charInfo) {
+  function buildCharCard(char, charInfo, uid) {
     var rarity = charInfo && charInfo.rarity != null ? charInfo.rarity : 0;
 
     var card = document.createElement('div');
@@ -452,7 +452,7 @@
 
     var nameEl = document.createElement('div');
     nameEl.className = 'operator-handbook-item-component operator-handbook-item-name';
-    nameEl.textContent = core.getOperatorName(char.charId);
+    nameEl.textContent = core.getOperatorName(char.charId, uid);
     card.appendChild(nameEl);
 
     var career = document.createElement('div');

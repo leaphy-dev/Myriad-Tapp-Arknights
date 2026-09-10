@@ -8,11 +8,34 @@
 // 由 core 层 require 加载，Page / Headless 共用。
 var skland = require('./page/api-skland.js');
 
-//TODO
-var PLAYER_DATA_KEY = 'arknights.player';
+// 玩家数据缓存：uid → record（{ ts, data }）。统一按 uid 读取，不再使用全局单一槽位。
+var PLAYER_DATA_BY_UID = {};
 
-var PLAYER_DATA_CACHE = null;
-var _playerDataPromise = null;
+// 按 uid 从当前可读的玩家列表加载数据并写入缓存；返回 Promise<record|null>
+async function loadPlayerData(uid) {
+  uid = String(uid || '');
+  if (!uid) return null;
+  var map = await getPlayerMap();
+  var entry = map && map[uid];
+  PLAYER_DATA_BY_UID[uid] = entry ? (entry.playerdata || null) : null;
+  return PLAYER_DATA_BY_UID[uid];
+}
+
+// 同步取某玩家缓存
+function getPlayerData(uid) {
+  return PLAYER_DATA_BY_UID[String(uid || '')] || null;
+}
+
+// 设置某玩家的展示缓存（展示 / 刷新后调用）
+function setActivePlayer(uid, record) {
+  PLAYER_DATA_BY_UID[String(uid || '')] = record || null;
+}
+
+// 以下是api: getPlayerInfo的细分
+function getDataUpdateTs(uid) {
+  var data = getPlayerData(uid);
+  return data && data.ts;
+}
 
 // ========================================
 // i18
@@ -40,167 +63,136 @@ function applyI18n(root) {
 // 玩家数据（纯数据，无 DOM 依赖，Page / Widget 共用）
 // ========================================
 
-// 读取：首次调用从 shared 触发加载并返回 Promise<record|null>；之后复用同一
-// Promise（resolve 后同步写回 PLAYER_DATA_CACHE，供渲染期同步读取函数使用）。
-// 传 force=true 可强制重读 shared（跨沙箱场景下获取最新数据）
-function loadPlayerData(force) {
-  if (force || !_playerDataPromise) {
-    _playerDataPromise = (async function () {
-      try {
-        var data = await Tapp.shared.get(PLAYER_DATA_KEY);
-        PLAYER_DATA_CACHE = data || null;
-      } catch (e) {
-        PLAYER_DATA_CACHE = null;
-      }
-      return PLAYER_DATA_CACHE;
-    })();
-  }
-  return _playerDataPromise;
-}
-
-// 模块加载时自动预读缓存（异步、非阻塞）
-// loadPlayerData();
-
-async function setPlayerData(map, uid) {
-  var record = { ts: Date.now(), data: map };
-  PLAYER_DATA_CACHE = record;
-  _playerDataPromise = Promise.resolve(record);
-  await Tapp.shared.set(PLAYER_DATA_KEY, record);
-}
 // 以下是api: getPlayerInfo的细分
-function getDataUpdateTs(uid) {
-  var data = PLAYER_DATA_CACHE;
-  return data?.ts;
-}
 
 function getPlayerStatus(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.status) || {};
 }
 
 function getPlayerMedal(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.medal) || {};
 }
 
 function getPlayerAssistChars(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.assistChars) || {};
 }
 
 function getPlayerChars(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.chars) || {};
 }
 
 function getPlayerSkins(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.skins) || {};
 }
 
 function getPlayerBuilding(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.building) || {};
 }
 
 function getPlayerRecruit(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.recruit) || {};
 }
 
 function getPlayerCampaign(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.campaign) || {};
 }
 
 function getPlayerTower(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.tower) || {};
 }
 
 function getPlayerRogue(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.rogue) || {};
 }
 
 function getPlayerRoutine(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.routine) || {};
 }
 
 function getPlayerActivity(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.activity) || {};
 }
 
 function getCharInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.charInfoMap) || {};
 }
 
 function getSkinInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.skinInfoMap) || {};
 }
 
 function getStageInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.stageInfoMap) || {};
 }
 
 function getActivityInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.activityInfoMap) || {};
 }
 
 function getTowerInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.towerInfoMap) || {};
 }
 
 function getRogueInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.rogueInfoMap) || {};
 }
 
 function getCampaignInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.campaignInfoMap) || {};
 }
 
 function getCampaignZoneInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.campaignZoneInfoMap) || {};
 }
 
 function getEquipmentInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.equipmentInfoMap) || {};
 }
 
 function getManufactureFormulaInfoMap(uid) {
-  var data = PLAYER_DATA_CACHE;
+  var data = getPlayerData(uid);
   var player = data && data.data ? data.data.player : null;
   return (player && player.manufactureFormulaInfoMap) || {};
 }
@@ -360,12 +352,158 @@ async function getAssistUnits(uid) {
 }
 
 // ========================================
+// 玩家列表（多账户）存储
+// storage（私有）：完整记录，含 hgToken / isPublic
+// shared（公开）：仅 isPublic 的记录，剔除 hgToken / isPublic
+// ========================================
+
+var PLAYER_MAP_KEY = 'arkPlayerMap';              // Tapp.storage
+var PUBLIC_PLAYER_MAP_KEY = 'arkPublicPlayerMap'; // Tapp.shared
+var LAST_VIEWED_KEY = 'arkLastViewedPlayer';      // Tapp.storage
+
+function isPlainObject(v) {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+// 读私有玩家列表（管理员用）
+async function getStoragePlayerMap() {
+  try {
+    var map = await Tapp.storage.get(PLAYER_MAP_KEY);
+    return isPlainObject(map) ? map : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+async function setStoragePlayerMap(map) {
+  try { await Tapp.storage.set(PLAYER_MAP_KEY, map); } catch (e) {}
+}
+
+// 读公开玩家列表（非管理员用）
+async function getPublicPlayerMap() {
+  try {
+    var map = await Tapp.shared.get(PUBLIC_PLAYER_MAP_KEY);
+    return isPlainObject(map) ? map : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+async function setPublicPlayerMap(map) {
+  try { await Tapp.shared.set(PUBLIC_PLAYER_MAP_KEY, map); } catch (e) {}
+}
+
+// 智能读取：管理员 → 私有 storage 列表；非管理员 → 公开 shared 列表
+async function getPlayerMap() {
+  var admin = false;
+  try { admin = !!(await Tapp.user.isAdmin()); } catch (e) {}
+  return admin ? getStoragePlayerMap() : getPublicPlayerMap();
+}
+
+// 当前用户上次浏览的玩家 uid（私有）
+async function getLastViewedUid() {
+  try { return String((await Tapp.storage.get(LAST_VIEWED_KEY)) || ''); } catch (e) { return ''; }
+}
+
+async function setLastViewedUid(uid) {
+  try { await Tapp.storage.set(LAST_VIEWED_KEY, String(uid || '')); } catch (e) {}
+}
+
+// 公开记录：剔除 isPublic / hgToken
+function toPublicEntry(entry) {
+  return {
+    uid: entry.uid,
+    platform: entry.platform || '',
+    isDefault: !!entry.isDefault,
+    lastUpdate: entry.lastUpdate || 0,
+    name: entry.name || '',
+    playerdata: entry.playerdata || null
+  };
+}
+
+// 依据私有列表重建公开列表（仅 isPublic 项）
+async function syncPublicPlayerMap(storageMap) {
+  var pub = {};
+  for (var uid in storageMap) {
+    var e = storageMap[uid];
+    if (e && e.isPublic) pub[uid] = toPublicEntry(e);
+  }
+  await setPublicPlayerMap(pub);
+  return pub;
+}
+
+// 新增/更新玩家到私有列表；列表原本为空时首个设为默认
+async function savePlayer(entry, hgToken, isPublic) {
+  var map = await getStoragePlayerMap();
+  var existed = !!map[entry.uid];
+  var isFirst = Object.keys(map).length === 0;
+  var record = {
+    uid: entry.uid,
+    platform: entry.platform || '',
+    isDefault: existed ? !!map[entry.uid].isDefault : isFirst,
+    lastUpdate: Date.now(),
+    name: entry.name || '',
+    isPublic: existed ? !!map[entry.uid].isPublic : !!isPublic,
+    hgToken: hgToken || (existed ? map[entry.uid].hgToken : ''),
+    playerdata: entry.playerdata || null
+  };
+  map[entry.uid] = record;
+  await setStoragePlayerMap(map);
+  await setLastViewedUid(entry.uid);
+  await syncPublicPlayerMap(map);
+  return record;
+}
+
+// 更新某玩家数据（刷新），不改动 isPublic / isDefault / hgToken, 曾经是setPlayerData
+async function updatePlayerData(uid, playerdata) {
+  var map = await getStoragePlayerMap();
+  if (!map[uid]) return null;
+  map[uid].playerdata = playerdata;
+  map[uid].lastUpdate = Date.now();
+  await setStoragePlayerMap(map);
+  await syncPublicPlayerMap(map);
+  return map[uid];
+}
+
+// 设置某玩家是否公开（同步公开列表）
+async function setPlayerPublic(uid, isPublic) {
+  var map = await getStoragePlayerMap();
+  if (!map[uid]) return null;
+  map[uid].isPublic = !!isPublic;
+  await setStoragePlayerMap(map);
+  await syncPublicPlayerMap(map);
+  return map[uid];
+}
+
+// 设置默认展示玩家（私有 + 公开各留一个）
+async function setDefaultPlayer(uid) {
+  var map = await getStoragePlayerMap();
+  for (var k in map) {
+    if (map[k]) map[k].isDefault = (k === uid);
+  }
+  await setStoragePlayerMap(map);
+  await syncPublicPlayerMap(map);
+  return map;
+}
+
+// 选要展示的玩家：优先 lastViewed，其次 isDefault，再次第一个
+function pickPlayerEntry(map, lastUid) {
+  if (!isPlainObject(map)) return null;
+  if (lastUid && map[lastUid]) return map[lastUid];
+  for (var uid in map) {
+    if (map[uid] && map[uid].isDefault) return map[uid];
+  }
+  for (var first in map) {
+    if (map[first]) return map[first];
+  }
+  return null;
+}
+
+// ========================================
 // exports
 // ========================================
 
 module.exports = {
-  PLAYER_DATA_KEY: PLAYER_DATA_KEY,
-
   skland: skland,
 
   t: t,
@@ -374,8 +512,23 @@ module.exports = {
 
   countUniqueChars: countUniqueChars,
   loadPlayerData: loadPlayerData,
-  setPlayerData: setPlayerData,
+  getPlayerData: getPlayerData,
+  setActivePlayer: setActivePlayer,
   getDataUpdateTs: getDataUpdateTs,
+
+  PLAYER_MAP_KEY: PLAYER_MAP_KEY,
+  PUBLIC_PLAYER_MAP_KEY: PUBLIC_PLAYER_MAP_KEY,
+  LAST_VIEWED_KEY: LAST_VIEWED_KEY,
+  getStoragePlayerMap: getStoragePlayerMap,
+  getPublicPlayerMap: getPublicPlayerMap,
+  getPlayerMap: getPlayerMap,
+  savePlayer: savePlayer,
+  updatePlayerData: updatePlayerData,
+  setPlayerPublic: setPlayerPublic,
+  setDefaultPlayer: setDefaultPlayer,
+  pickPlayerEntry: pickPlayerEntry,
+  getLastViewedUid: getLastViewedUid,
+  setLastViewedUid: setLastViewedUid,
 
   getPlayerStatus: getPlayerStatus,
   getPlayerMedal: getPlayerMedal,

@@ -18,6 +18,41 @@
     });
   }
 
+  // 预连接图片域名，省去 DNS / TLS 握手时间（每个 origin 只做一次）
+  var _preconnected = {};
+  function preconnectHost(url) {
+    try {
+      var m = /^(https?:\/\/[^/]+)/i.exec(String(url || ''));
+      if (!m) return;
+      var origin = m[1];
+      if (_preconnected[origin]) return;
+      _preconnected[origin] = true;
+      var pc = document.createElement('link');
+      pc.rel = 'preconnect';
+      pc.href = origin;
+      document.head.appendChild(pc);
+      var dns = document.createElement('link');
+      dns.rel = 'dns-prefetch';
+      dns.href = origin;
+      document.head.appendChild(dns);
+    } catch (e) {}
+  }
+
+  // 提前发起图片下载，使 <img> 命中浏览器缓存 / 复用进行中的请求
+  function preloadImages(urls) {
+    for (var i = 0; i < urls.length; i++) {
+      var url = urls[i];
+      if (!url) continue;
+      preconnectHost(url);
+      try {
+        var img = new Image();
+        img.referrerPolicy = 'no-referrer';
+        img.decoding = 'async';
+        img.src = url;
+      } catch (e) {}
+    }
+  }
+
   function formatDate(ts) {
     var d = new Date(Number(ts) * 1000);
     if (isNaN(d.getTime())) return '';
@@ -37,7 +72,7 @@
     return '<div style="position:absolute;inset:0;border:2px dashed #60a5fa;border-radius:12px;pointer-events:none;"></div>';
   }
 
-  function buildAvatar(c, scale, sizePx, src, eliteSrc) {
+  function buildAvatar(c, scale, sizePx, src, eliteSrc, priority) {
     var html =
       '<div style="position:relative;width:' + sizePx + 'px;height:' + sizePx + 'px;flex-shrink:0;">' +
       '<div style="position:absolute;inset:0;border-radius:8px;overflow:hidden;background:' + c.cellBg + ';' +
@@ -45,13 +80,15 @@
       '<span style="font-size:' + Math.round(sizePx * 0.45) + 'px;"> </span>';
     if (src) {
       html +=
-        '<img referrerpolicy="no-referrer" src="' + esc(src) + '" alt="" ' +
-        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000;" />';
+        '<img referrerpolicy="no-referrer" src="' + esc(src) + '" alt="" decoding="async" ' +
+        (priority ? 'fetchpriority="high" ' : '') +
+        'style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000;' +
+        'opacity:0;transition:opacity 0.25s ease;" />';
     }
     html += '</div>';
     if (eliteSrc) {
       html +=
-        '<img referrerpolicy="no-referrer" src="' + esc(eliteSrc) + '" alt="" ' +
+        '<img referrerpolicy="no-referrer" src="' + esc(eliteSrc) + '" alt="" decoding="async" ' +
         'style="position:absolute;top:-2px;right:-2px;width:' + Math.round(sizePx * 0.32) + 'px;height:' +
         Math.round(sizePx * 0.32) + 'px;pointer-events:none;" />';
     }
@@ -62,7 +99,7 @@
   function buildHeader(c, scale, fontScale, summary, big) {
     var html =
       '<div style="display:flex;align-items:center;gap:' + Math.round(10 * scale) + 'px;flex-shrink:0;">' +
-      buildAvatar(c, scale, Math.round((big ? 56 : 44) * scale), summary.avatar) +
+      buildAvatar(c, scale, Math.round((big ? 56 : 44) * scale), summary.avatar, '', true) +
       '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">' +
       '<div style="font-size:' + Math.round((big ? 17 : 15) * fontScale) + 'px;font-weight:700;color:' + c.textMain + ';' +
       'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(summary.name || '—') + '</div>';
@@ -106,7 +143,7 @@
     return html;
   }
 
-  function buildAssistUnits(c, scale, fontScale, units) {
+  function buildAssistUnits(c, scale, fontScale, units, uid) {
     if (!units.length) {
       return '<div style="font-size:' + Math.round(11 * fontScale) + 'px;color:' + c.textMuted + ';">' +
         esc(core.t('assets.noSupport')) + '</div>';
@@ -118,7 +155,7 @@
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;">' +
         buildAvatar(c, scale, Math.round(64 * scale), u.avatarUrl, u.eliteUrl) +
         '<span style="font-size:' + Math.round(11 * fontScale) + 'px;font-weight:600;color:' + c.textMain + ';' +
-        'max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(core.getOperatorName(u.id)) + '</span>' +
+        'max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(core.getOperatorName(u.id, uid)) + '</span>' +
         '<span style="font-size:' + Math.round(10 * fontScale) + 'px;color:' + c.textMuted + ';">' +
         esc('LV' + (u.level != null ? u.level : '?')) + '</span>' +
         '</div>';
@@ -141,7 +178,7 @@
     );
   }
 
-  function buildLarge(c, primary, scale, fontScale, summary, assist, props) {
+  function buildLarge(c, primary, scale, fontScale, summary, assist, props, uid) {
     return (
       '<div class="w-glass" style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;' +
       'background:' + c.bg + ';border:1px solid ' + c.border + ';">' +
@@ -158,23 +195,23 @@
       '// SUPPORT UNITS</span>' +
       '</div>' +
       '<div style="flex:1;min-height:0;display:flex;align-items:center;">' +
-      buildAssistUnits(c, scale, fontScale, assist) +
+      buildAssistUnits(c, scale, fontScale, assist, uid) +
       '</div>' +
       (props.isEditMode ? buildEditOverlay() : '') +
       '</div></div>'
     );
   }
 
-  function buildEmpty(c, primary, scale, fontScale) {
+  function buildMessage(c, primary, scale, fontScale, msgKey, icon) {
     return (
       '<div class="w-glass" style="position:relative;width:100%;height:100%;border-radius:12px;overflow:hidden;' +
       'background:' + c.bg + ';border:1px solid ' + c.border + ';">' +
       buildGlow(primary) +
       '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;' +
       'justify-content:center;padding:12px;">' +
-      '<span style="font-size:' + Math.round(24 * scale) + 'px;margin-bottom:6px;"> </span>' +
+      '<span style="font-size:' + Math.round(24 * scale) + 'px;margin-bottom:6px;">' + esc(icon || ' ') + '</span>' +
       '<span style="font-size:' + Math.round(12 * fontScale) + 'px;color:' + c.textMuted + ';text-align:center;">' +
-      esc(core.t('widget.empty')) + '</span>' +
+      esc(core.t(msgKey)) + '</span>' +
       '</div></div>'
     );
   }
@@ -198,8 +235,32 @@
         img.onerror = function () {
           img.style.display = 'none';
         };
+        // 命中缓存时 onload 可能已触发，直接淡入；否则等加载完成
+        if (img.complete && img.naturalWidth) {
+          img.style.opacity = '1';
+        } else {
+          img.onload = function () {
+            img.style.opacity = '1';
+          };
+        }
       })(imgs[i]);
     }
+  }
+
+  // 解析本卡片应展示的玩家 uid：
+  // - 配置了 uid：存在于可读列表 → 使用；否则提示无权访问 / 账户不存在
+  // - 未配置：与 Page 一致，lastViewed → isDefault → 第一个
+  async function resolveUid(map, wantUid) {
+    if (wantUid) {
+      if (map && map[wantUid]) return { uid: wantUid };
+      var admin = false;
+      try { admin = !!(await Tapp.user.isAdmin()); } catch (e) {}
+      return { error: admin ? 'widget.notFound' : 'widget.noAccess' };
+    }
+    var lastUid = await core.getLastViewedUid();
+    var entry = core.pickPlayerEntry(map, lastUid);
+    if (entry && entry.uid) return { uid: entry.uid };
+    return { error: 'widget.empty' };
   }
 
   function render(container, props) {
@@ -209,6 +270,8 @@
     var scale = props.scale || 1;
     var fontScale = props.fontScale || 1;
     var primary = props.primaryColor || '#8b5cf6';
+    var config = props.config || props.settings || {};
+    var wantUid = String(config.uid || '').trim();
 
     var c = {
       bg: 'var(--w-bg)',
@@ -226,6 +289,7 @@
       String(scale),
       String(fontScale),
       primary,
+      wantUid,
       props.isEditMode ? 'edit' : 'view'
     ].join('|');
 
@@ -241,16 +305,15 @@
     }
 
     return (async function () {
-      // var data = null;
-      // try {
-      //   data = await Tapp.shared.get(core.PLAYER_DATA_KEY);
-      // } catch (e) {}
+      // 与 Page 一致：管理员读私有列表、非管理员读公开列表
+      var map = await core.getPlayerMap();
+      var resolved = await resolveUid(map, wantUid);
 
-      // var dataKey = data && data.data ? String(data.ts || 'no-ts') : 'empty';
+      if (resolved.uid) await core.loadPlayerData(resolved.uid);
 
-      // Load firstly!!!
-      await core.loadPlayerData(null); // TODO
-      var dataKey = core.getDataUpdateTs(null) //TODO
+      var dataKey = resolved.error
+        ? 'err:' + resolved.error
+        : resolved.uid + ':' + (core.getDataUpdateTs(resolved.uid) || 'no-ts');
 
       // 数据未变化且容器已显示对应内容时跳过重建
       if (cache.html && cache.propsKey === propsKey && cache.dataKey === dataKey) {
@@ -263,15 +326,30 @@
 
       cache.propsKey = propsKey;
       cache.dataKey = dataKey;
-      var summary = core.generatePlayerSummary(null); // TODO
-      if (!summary) {
-        cache.html = buildEmpty(c, primary, scale, fontScale);
-      } else {
-        var assist = size === '4x4' ? await core.getAssistUnits(null) : [];
 
-        cache.html = size === '4x4'
-          ? buildLarge(c, primary, scale, fontScale, summary, assist, props)
-          : buildWide(c, primary, scale, fontScale, summary, props);
+      if (resolved.error) {
+        var icon = resolved.error === 'widget.noAccess' ? '🔒' : (resolved.error === 'widget.notFound' ? '❔' : ' ');
+        cache.html = buildMessage(c, primary, scale, fontScale, resolved.error, icon);
+      } else {
+        var summary = core.generatePlayerSummary(resolved.uid);
+        if (!summary || (!summary.name && !summary.level)) {
+          cache.html = buildMessage(c, primary, scale, fontScale, 'widget.empty', ' ');
+        } else {
+          // 主头像尽早开始下载，与助战干员 URL 计算并行
+          if (summary.avatar) preloadImages([summary.avatar]);
+
+          var assist = size === '4x4' ? await core.getAssistUnits(resolved.uid) : [];
+
+          if (assist.length) {
+            var assistUrls = [];
+            for (var ai = 0; ai < assist.length; ai++) assistUrls.push(assist[ai].avatarUrl);
+            preloadImages(assistUrls);
+          }
+
+          cache.html = size === '4x4'
+            ? buildLarge(c, primary, scale, fontScale, summary, assist, props, resolved.uid)
+            : buildWide(c, primary, scale, fontScale, summary, props);
+        }
       }
 
       container.innerHTML = cache.html;
