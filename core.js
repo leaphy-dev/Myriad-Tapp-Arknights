@@ -235,9 +235,8 @@ function generatePlayerSummary(uid) {
   var furnitureNum = getPlayerBuilding(uid)?.furniture?.total;
   var medalNum = getPlayerMedal(uid)?.total;
   var progress = status.mainStageProgress;
-  var progressVal = progress
-    ? (typeof progress === 'string' ? progress.replace(/^main_/i, '') : progress)
-    : '-';
+  var progressInfo = progress ? getStageInfoMap(uid)[progress] : null;
+  var progressVal = progressInfo && progressInfo.code ? progressInfo.code : '-';
 
   return {
     name: name,
@@ -294,16 +293,39 @@ async function getRepoBase() {
   return base;
 }
 
+/**
+ * 干员头像 URL（默认皮肤）。
+ * 精英化 0/1 用 `avatar/{charId}.png`，精英化 2 用 `avatar/{charId}_2.png`。
+ * @param {string} repoBase 素材仓库基址（绝对 https://，无尾 /）
+ * @param {string} charId 干员 id，例 "char_002_amiya"
+ * @param {number} [evolvePhase] 精英化阶段 0/1/2
+ * @returns {string} 头像图片 URL
+ */
 function avatarUrl(repoBase, charId, evolvePhase) {
   var suffix = (evolvePhase || 0) >= 2 ? '_2' : '';
   return repoBase + '/avatar/' + charId + suffix + '.png';
 }
 
+/**
+ * 皮肤头像 URL。
+ * 仅“品牌皮肤”（skinId 含 `@`）有独立头像：文件名把 `@` 转 `_`、`#` 转 `%23`，
+ * 例 "char_102_texas@winter#1" → "avatar/char_102_texas_winter%231.png"。
+ * 默认皮肤（不含 `@`）无独立头像，返回 ''，由调用方回落到 {@link avatarUrl}。
+ * @param {string} repoBase 素材仓库基址（绝对 https://，无尾 /）
+ * @param {string} skinId 皮肤 id，例 "char_102_texas@winter#1"
+ * @returns {string} 皮肤头像图片 URL；非品牌皮肤返回空串
+ */
 function skinAvatarUrl(repoBase, skinId) {
   if (!skinId || skinId.indexOf('@') === -1) return '';
   return repoBase + '/avatar/' + skinId.replace(/@/g, '_').replace(/#/g, '%23') + '.png';
 }
 
+/**
+ * 助战干员头像 URL：优先品牌皮肤头像，无则回落到干员默认头像。
+ * @param {string} repoBase 素材仓库基址（绝对 https://，无尾 /）
+ * @param {{ charId: string, skinId?: string, evolvePhase?: number }} op 助战干员
+ * @returns {string} 头像图片 URL
+ */
 function assistAvatarUrl(repoBase, op) {
   return skinAvatarUrl(repoBase, op.skinId) || avatarUrl(repoBase, op.charId, op.evolvePhase);
 }
@@ -424,7 +446,7 @@ function toPublicEntry(entry) {
 // 依据私有列表重建公开列表（仅 isPublic 项）
 async function syncPublicPlayerMap(storageMap) {
   var pub = {};
-  for (var uid in storageMap) {
+  for (let uid in storageMap) {
     var e = storageMap[uid];
     if (e && e.isPublic) pub[uid] = toPublicEntry(e);
   }
@@ -486,6 +508,37 @@ async function setDefaultPlayer(uid) {
   return map;
 }
 
+// 删除玩家：同步公开列表；若删的是默认项则顺延默认；清理 lastViewed 与数据缓存
+async function deletePlayer(uid) {
+  uid = String(uid || '');
+  var map = await getStoragePlayerMap();
+  if (!map[uid]) return map;
+
+  var wasDefault = !!map[uid].isDefault;
+  delete map[uid];
+
+  if (wasDefault) {
+    for (var k in map) {
+      if (map[k]) { map[k].isDefault = true; break; }
+    }
+  }
+
+  await setStoragePlayerMap(map);
+  await syncPublicPlayerMap(map);
+
+  var last = await getLastViewedUid();
+  if (last === uid) {
+    var next = '';
+    for (var k2 in map) {
+      if (map[k2]) { next = k2; break; }
+    }
+    await setLastViewedUid(next);
+  }
+
+  delete PLAYER_DATA_BY_UID[uid];
+  return map;
+}
+
 // 选要展示的玩家：优先 lastViewed，其次 isDefault，再次第一个
 function pickPlayerEntry(map, lastUid) {
   if (!isPlainObject(map)) return null;
@@ -526,6 +579,7 @@ module.exports = {
   updatePlayerData: updatePlayerData,
   setPlayerPublic: setPlayerPublic,
   setDefaultPlayer: setDefaultPlayer,
+  deletePlayer: deletePlayer,
   pickPlayerEntry: pickPlayerEntry,
   getLastViewedUid: getLastViewedUid,
   setLastViewedUid: setLastViewedUid,
@@ -534,6 +588,7 @@ module.exports = {
   getPlayerMedal: getPlayerMedal,
   getPlayerAssistChars: getPlayerAssistChars,
   getPlayerChars: getPlayerChars,
+  getPlayerSkins: getPlayerSkins,
   getPlayerBuilding: getPlayerBuilding,
   getPlayerRecruit: getPlayerRecruit,
   getPlayerCampaign: getPlayerCampaign,

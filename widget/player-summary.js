@@ -115,8 +115,11 @@
       }
       if (summary.registerTs) {
         html +=
-          '<span style="font-size:' + Math.round(10 * fontScale) + 'px;color:' + c.textDim + ';letter-spacing:0.4px;">' +
-          esc(formatDate(summary.registerTs)) + '</span>';
+          '<span style="display:inline-block;padding:1px 8px;border-radius:999px;' +
+          'background:' + c.cellBg + ';border:1px solid ' + c.cellBorder + ';' +
+          'font-size:' + Math.round(10 * fontScale) + 'px;font-weight:600;color:' + c.textDim + ';' +
+          'letter-spacing:0.3px;white-space:nowrap;">' +
+          esc(core.t('home.enroll') + ' ' + formatDate(summary.registerTs)) + '</span>';
       }
       html += '</div>';
     }

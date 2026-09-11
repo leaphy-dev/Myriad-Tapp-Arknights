@@ -78,6 +78,7 @@
     var charInfoMap = core.getCharInfoMap(uid);
     var skinInfoMap = core.getSkinInfoMap(uid);
     var chars = core.getPlayerChars(uid);
+    var skins = core.getPlayerSkins(uid);
 
     var filterState = { professions: [], rarities: [], sortBy: 'rarity' };
     var filterTool = null;
@@ -102,7 +103,7 @@
     wrap.appendChild(tabBar);
 
     var charPanel = renderCharPanel(chars, charInfoMap, assets, filterState, uid);
-    var skinPanel = renderSkinPanel(skinInfoMap);
+    var skinPanel = renderSkinPanel(skins, skinInfoMap, assets, uid);
     wrap.appendChild(charPanel);
     wrap.appendChild(skinPanel);
     skinPanel.style.display = 'none';
@@ -373,14 +374,36 @@
     }
   }
 
-  function renderSkinPanel(skinInfoMap) {
+  function renderSkinPanel(skins, skinInfoMap, assets, uid) {
     var panel = document.createElement('div');
-    panel.setAttribute(
-      'style',
-      'padding:32px;text-align:center;font-size:13px;color:var(--ark-text-dim);' +
-        'border:1px dashed var(--ark-border-weak);border-radius:var(--ak-radius-subtle);'
-    );
-    panel.textContent = core.t('collection.skinTodoPrefix') + Object.keys(skinInfoMap || {}).length + core.t('collection.skinTodoSuffix');
+    var list = Array.isArray(skins) ? skins.slice() : [];
+
+    if (!list.length) {
+      panel.setAttribute('style', 'font-size:12px;color:var(--ark-text-dim);');
+      panel.textContent = core.t('collection.noSkins');
+      return panel;
+    }
+
+    // 按获取时间倒序（有 ts 时）
+    list.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+
+    var grid = document.createElement('div');
+    grid.setAttribute('style', 'display:grid;grid-template-columns:repeat(auto-fill, var(--char-card-w));gap:14px;justify-content:center;');
+    panel.appendChild(grid);
+
+    var cards = [];
+    for (var i = 0; i < list.length; i++) {
+      var skin = list[i];
+      var info = skinInfoMap && skinInfoMap[skin.id];
+      var card = assets.buildSkinCard(skin, info, uid);
+      grid.appendChild(card);
+      cards.push(card);
+    }
+
+    requestAnimationFrame(function () {
+      for (var k = 0; k < cards.length; k++) cards[k].style.opacity = '1';
+    });
+
     return panel;
   }
 

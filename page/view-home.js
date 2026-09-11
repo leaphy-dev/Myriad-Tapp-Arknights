@@ -372,21 +372,26 @@
     var assists = core.getPlayerAssistChars(uid);
     var assets = window.__arkAssets;
 
-    if (!assets) return;
-
-    var infoCard = assets.buildPlayerInfoCard(uid);
-    var gameDataCard = assets.buildGameDataCard(uid);
+    if (!assets) {
+      content.appendChild(buildLoadFail(new Error('assets module not loaded')));
+      return;
+    }
 
     var layout = document.createElement('div');
     layout.setAttribute('class', 'ark-display-layout');
 
-    var leftCol = document.createElement('div');
-    leftCol.setAttribute('class', 'ark-display-left');
-    leftCol.appendChild(infoCard);
+    var gameDataCard = assets.buildGameDataCard(uid);
 
     var rightCol = document.createElement('div');
     rightCol.setAttribute('class', 'ark-display-right');
     rightCol.appendChild(gameDataCard);
+
+    var leftCol = document.createElement('div');
+    leftCol.setAttribute('class', 'ark-display-left');
+
+    // 有图像的资源使用placeHolder占位
+    var infoPlaceholder = makeSpinnerBox();
+    leftCol.appendChild(infoPlaceholder);
 
     var assistPlaceholder = makeSpinnerBox();
     leftCol.appendChild(assistPlaceholder);
@@ -416,33 +421,40 @@
 
     assets.loadAssets().then(function () {
     // assets.setCharInfoMap(player.charInfoMap);
+    infoPlaceholder.replaceWith(assets.buildPlayerInfoCard(uid));
     assistPlaceholder.replaceWith(assets.buildAssistUnit(assists, uid));
     myCharsPlaceholder.replaceWith(assets.buildMyChars(core.getPlayerChars(uid), core.getCharInfoMap(uid), uid));
     }).catch(function (error) {
       console.error('加载资源失败:', error);
-      
-      var fail = document.createElement('div');
-      fail.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);padding:16px;text-align:center;');
-      
-      // 显示具体错误信息
-      var errorMsg = error.message || core.t('home.loadFail');
-      fail.textContent = core.t('home.loadFail') + ' (' + errorMsg + ')';
-      
-      // 添加重试按钮
-      var retryBtn = document.createElement('button');
-      retryBtn.textContent = 'retry';
-      retryBtn.setAttribute('style', 'margin-top:8px;padding:4px 12px;cursor:pointer;');
-      retryBtn.onclick = function() {
-        location.reload();
-      };
-      fail.appendChild(retryBtn);
-      
+
+      var fail = buildLoadFail(error);
+
+      if (infoPlaceholder.parentNode) infoPlaceholder.remove();
       assistPlaceholder.replaceWith(fail);
       myCharsPlaceholder.replaceWith(fail.cloneNode(true));
     });
   }
 
   // ==================== 共用 ====================
+
+  // 资源加载失败提示（含 retry）
+  function buildLoadFail(error) {
+    var fail = document.createElement('div');
+    fail.setAttribute('style', 'font-size:11px;color:var(--ark-text-dim);padding:16px;text-align:center;');
+
+    var errorMsg = (error && error.message) || core.t('home.loadFail');
+    fail.textContent = core.t('home.loadFail') + ' (' + errorMsg + ')';
+
+    var retryBtn = document.createElement('button');
+    retryBtn.textContent = 'retry';
+    retryBtn.setAttribute('style', 'margin-top:8px;padding:4px 12px;cursor:pointer;');
+    retryBtn.onclick = function () {
+      location.reload();
+    };
+    fail.appendChild(retryBtn);
+
+    return fail;
+  }
 
   function makeSpinner(size) {
     var holder = document.createElement('div');

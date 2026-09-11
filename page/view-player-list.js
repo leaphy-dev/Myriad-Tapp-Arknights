@@ -128,6 +128,7 @@
     controls.appendChild(buildViewButton(entry));
     controls.appendChild(buildSwitch(entry, admin, wrap, listBox));
     controls.appendChild(buildRadio(entry, admin, wrap, listBox));
+    if (admin) controls.appendChild(buildDeleteButton(entry, wrap, listBox));
     card.appendChild(controls);
 
     return card;
@@ -219,6 +220,35 @@
     label.appendChild(dot);
     label.appendChild(text);
     return label;
+  }
+
+  function buildDeleteButton(entry, wrap, listBox) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.setAttribute('class', 'ak-button ak-button--ghost ark-player-card__delete');
+    btn.setAttribute('style', 'padding:6px 12px;font-size:12px;cursor:pointer;color:var(--ak-signal-danger);');
+    btn.textContent = core.t('playerList.delete');
+    btn.addEventListener('click', async function () {
+      var ok = false;
+      try {
+        ok = !!(await window.__arkDialog.confirm(core.t('playerList.deleteConfirm'), {
+          title: core.t('playerList.deleteTitle'),
+          confirmText: core.t('common.confirm'),
+          danger: true
+        }));
+      } catch (e) {
+        ok = false;
+      }
+      if (!ok) return;
+      btn.disabled = true;
+      try {
+        await core.deletePlayer(entry.uid);
+        await load(wrap, listBox);
+      } catch (e) {
+        btn.disabled = false;
+      }
+    });
+    return btn;
   }
 
   function formatDateTime(ts) {

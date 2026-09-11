@@ -6,7 +6,11 @@
     "next": "Next",
     "prev": "Previous",
     "cancel": "Cancel",
-    "unknown": "Unknown"
+    "confirm": "Confirm",
+    "unknown": "Unknown",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFail": "Copy failed"
   },
   "home": {
     "refresh": "Refresh",
@@ -42,6 +46,9 @@
     "title": "Player List",
     "add": "Add player",
     "view": "View",
+    "delete": "Delete",
+    "deleteTitle": "Delete player",
+    "deleteConfirm": "Delete this player? This cannot be undone.",
     "showPublic": "Public",
     "default": "Default",
     "empty": "No players",
@@ -74,8 +81,7 @@
     "sortGain": "Obtained",
     "sortName": "Name",
     "empty": "No operator data",
-    "skinTodoPrefix": "Skin assets · TODO (",
-    "skinTodoSuffix": " skins)"
+    "noSkins": "No skins"
   },
   "widget": {
     "empty": "No player data. Bind an account in the app.",
@@ -101,6 +107,8 @@
     "tabCampaign": "Annihilation",
     "tabTower": "Stationing",
     "noActivity": "No activities",
+    "inProgress": "In progress",
+    "completed": "Completed",
     "noRogue": "No roguelike",
     "noCampaign": "No annihilation",
     "noTower": "No stationing",

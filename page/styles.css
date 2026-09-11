@@ -53,6 +53,28 @@ html.dark {
   display: none !important;
 }
 
+/* 视图切换入场动画（.ark-view-enter 由 index.js 路由添加） */
+@keyframes ark-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ark-view-enter {
+  animation: ark-view-enter var(--ak-motion-base) var(--ak-ease-standard);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ark-view-enter {
+    animation: none;
+  }
+}
+
 /* AnimatedView 外层：min-h-screen + pt-20 + px-4/sm:px-6 + pb-24/md:pb-12 */
 .home-view,
 .collection-view,
@@ -211,6 +233,11 @@ html.dark .collection-view {
 
 [data-ak-ui] .ak-button--success {
   background-color: var(--ak-signal-success);
+  color: var(--ak-surface-inverse);
+}
+
+[data-ak-ui] .ak-button--danger {
+  background-color: var(--ak-signal-danger);
   color: var(--ak-surface-inverse);
 }
 
@@ -405,6 +432,21 @@ html.dark .collection-view {
   min-width: 0;
 }
 
+/* 玩家数据概要图标：白色描边，亮色模式下反色以在浅色背景可见 */
+.home-view .ark-summary-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 4px;
+  opacity: 0.85;
+  filter: invert(1);
+}
+
+html.dark .home-view .ark-summary-icon {
+  filter: none;
+}
+
 @media (min-width: 900px) {
   .home-view .ark-display-layout {
     flex-direction: row;
@@ -470,32 +512,16 @@ html.dark .collection-view {
   height: 0;
 }
 
-/* 我的干员：水平滚动条（默认隐藏，滚动时才显示） */
+/* 我的干员：水平滚动（滚动条完全隐藏） */
 
 .home-view .ark-my-chars-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-width: none;
 }
 
 .home-view .ark-my-chars-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.home-view .ark-my-chars-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.home-view .ark-my-chars-scroll::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 3px;
-}
-
-.home-view .ark-my-chars-scroll.scrolling {
-  scrollbar-color: var(--ark-border) transparent;
-}
-
-.home-view .ark-my-chars-scroll.scrolling::-webkit-scrollbar-thumb {
-  background: var(--ark-border);
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* ========================================
@@ -683,6 +709,92 @@ html.dark .collection-view {
 }
 
 /* ========================================
+   皮肤卡片（独立样式，不带干员卡片的稀有度背景）
+   ======================================== */
+
+.ark-skin-card {
+  position: relative;
+  width: var(--char-card-w);
+  height: var(--char-card-h);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--ak-surface-panel);
+  border: var(--ak-line-hairline) solid var(--ark-border-weak);
+  border-radius: var(--ak-radius-subtle);
+  transition: transform var(--ak-motion-base) var(--ak-ease-standard),
+    box-shadow var(--ak-motion-base) var(--ak-ease-standard),
+    border-color var(--ak-motion-base) var(--ak-ease-standard),
+    opacity 0.4s ease;
+}
+
+.ark-skin-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--ak-signal-accent);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
+  z-index: 10;
+}
+
+.ark-skin-card__illust {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(var(--char-card-w) * 2);
+}
+
+.ark-skin-card__illust img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center top;
+  display: block;
+}
+
+.ark-skin-card__spinner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ark-skin-card__name {
+  position: absolute;
+  bottom: calc(var(--char-card-w) * 0.03);
+  left: 0;
+  right: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  text-align: center;
+  color: var(--ak-text-primary);
+  font-size: calc(var(--char-card-w) * 0.12);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 6;
+}
+
+.ark-skin-card__char {
+  position: absolute;
+  bottom: calc(var(--char-card-w) * 0.2);
+  left: 0;
+  right: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
+  text-align: center;
+  color: var(--ak-text-secondary);
+  font-size: calc(var(--char-card-w) * 0.09);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 6;
+}
+
+/* ========================================
    ak-ui（accent 模式）
    令牌 vendored from @yunyoujun/ak-ui@0.2.1 tokens.css，
    语义角色按宿主品牌映射；保留现有布局，仅注入字体层级、
@@ -765,7 +877,8 @@ html.dark {
   --ak-surface-muted: rgba(26, 26, 26, 0.92);
   --ak-surface-raised: rgba(66, 66, 66, 0.92);
   --ak-surface-inverse: #17191b;
-  --ak-text-inverse: #1b1d1f;
+  /* 反色文本须与 --ak-surface-inverse（深色）对比；暗色下仍为浅色，否则 Debug 控制台同色不可见 */
+  --ak-text-inverse: #f5f5f5;
   --ak-shadow-panel: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.55);
 }
 
@@ -974,6 +1087,107 @@ html.dark {
   color: var(--ak-text-secondary);
 }
 
+/* ========================================
+   ak-dialog（native <dialog> + ak-ui system）
+   ======================================== */
+
+.ak-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(420px, calc(100vw - 32px));
+  height: fit-content;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ak-text-primary);
+  overflow: visible;
+}
+
+.ak-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.ak-dialog__panel {
+  box-sizing: border-box;
+  padding: 20px;
+  background: var(--ak-surface-panel);
+  border: var(--ak-line-hairline) solid var(--ark-border-strong);
+  box-shadow: var(--ak-shadow-panel);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--ak-cut-md)) 0,
+    100% var(--ak-cut-md),
+    100% 100%,
+    0 100%
+  );
+}
+
+@keyframes ak-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ak-dialog[open] .ak-dialog__panel {
+  animation: ak-dialog-in var(--ak-motion-base) var(--ak-ease-emphasized);
+}
+
+.ak-dialog__eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-family: var(--ak-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ak-signal-accent);
+}
+
+.ak-dialog__title {
+  margin: 0;
+  font-family: var(--ak-font-command);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ak-text-primary);
+}
+
+.ak-dialog__description {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ak-text-secondary);
+}
+
+.ak-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.ak-dialog__cancel,
+.ak-dialog__confirm {
+  min-width: 88px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-dialog[open] .ak-dialog__panel {
+    animation: none;
+  }
+}
+
 /* 减少动态偏好 */
 @media (prefers-reduced-motion: reduce) {
   [data-ak-ui] button,
@@ -981,7 +1195,8 @@ html.dark {
     transition: none;
   }
 
-  .operator-handbook-item-wrapper:hover {
+  .operator-handbook-item-wrapper:hover,
+  .ark-skin-card:hover {
     transform: none;
   }
 }
@@ -1061,6 +1276,15 @@ html.dark {
   align-items: center;
   gap: 18px;
   flex-shrink: 0;
+}
+
+.player-list-view .ark-player-card__delete {
+  border-color: color-mix(in srgb, var(--ak-signal-danger) 45%, var(--ark-border-strong));
+}
+
+.player-list-view .ark-player-card__delete:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--ak-signal-danger) 12%, transparent);
+  border-color: var(--ak-signal-danger);
 }
 
 /* 添加玩家：列表底部加号卡片（管理员） */

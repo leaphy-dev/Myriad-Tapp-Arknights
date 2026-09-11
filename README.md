@@ -50,6 +50,7 @@
 │   ├── api-skland.js          # 森空岛接口签名与请求（core 加载的共享模块）
 │   ├── api-crypto.js          # 签名加密工具（SHA-256 / HMAC / MD5）
 │   ├── ui-assets.js           # 卡片 / 助战 / 占位等 DOM 构建
+│   ├── ui-dialog.js           # ak-dialog 确认对话框（原生 <dialog>）
 │   ├── view-home.js           # 主页渲染
 │   ├── view-player-list.js    # 玩家列表（公开开关 / 默认展示）
 │   ├── view-add-player.js     # 添加玩家（登录 + 选择账号；凭证安全告警 + 页脚版权）
@@ -61,7 +62,7 @@
 ├── i18n/
 │   ├── zh-CN.json
 │   └── en-US.json
-├── assets/                    # 包内资源（职业 / 精英化 / 潜能 / 星级图标等）
+├── assets/                    # 包内资源（职业 / 精英化 / 潜能 / 星级图标、页面装饰与概要图标等）
 ├── scripts/
 │   └── generate-preview.mjs   # 生成商店预览快照
 ├── tests/

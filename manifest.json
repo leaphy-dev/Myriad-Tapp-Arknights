@@ -65,8 +65,13 @@
     }
   ],
   "assets": [
+    "assets/decoration/char_icon.png",
     "assets/decoration/decorator_dark.png",
+    "assets/decoration/furniture_icon.png",
+    "assets/decoration/main_icon.png",
+    "assets/decoration/medal_icon.png",
     "assets/decoration/page_mask_dark.png",
+    "assets/decoration/skin_icon.png",
     "assets/rank/elite0.png",
     "assets/rank/elite1.png",
     "assets/rank/elite2.png",
@@ -186,7 +191,7 @@
       "method": "POST",
       "description": "鹰角网络 OAuth2，用账号 Token 换取授权码",
       "headers": {
-        "User-Agent": "Skland/1.5.1 (com.hypergryph.skland; build:100501001; Android 34; ) Okhttp/4.11.0",
+        "User-Agent": "Skland/1.62.0 (com.hypergryph.skland; build:106200040; Android 36; ) Okhttp/4.11.0",
         "Content-Type": "application/json"
       },
       "body": {

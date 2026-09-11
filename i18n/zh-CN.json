@@ -6,7 +6,11 @@
     "next": "下一步",
     "prev": "上一步",
     "cancel": "取消",
-    "unknown": "未知"
+    "confirm": "确定",
+    "unknown": "未知",
+    "copy": "复制",
+    "copied": "已复制",
+    "copyFail": "复制失败"
   },
   "home": {
     "refresh": "刷新数据",
@@ -42,6 +46,9 @@
     "title": "玩家列表",
     "add": "添加玩家",
     "view": "查看",
+    "delete": "删除",
+    "deleteTitle": "删除玩家",
+    "deleteConfirm": "确定删除该玩家？此操作不可撤销。",
     "showPublic": "公开",
     "default": "默认展示",
     "empty": "暂无玩家",
@@ -74,8 +81,7 @@
     "sortGain": "获取时间",
     "sortName": "角色名称",
     "empty": "暂无干员数据",
-    "skinTodoPrefix": "时装资产 · TODO（",
-    "skinTodoSuffix": " 个皮肤）"
+    "noSkins": "暂无时装"
   },
   "widget": {
     "empty": "暂无玩家数据，请在应用页面绑定账号",
@@ -101,6 +107,8 @@
     "tabCampaign": "剿灭",
     "tabTower": "保全派驻",
     "noActivity": "暂无活动",
+    "inProgress": "进行中",
+    "completed": "已完成",
     "noRogue": "暂无集成战略",
     "noCampaign": "暂无剿灭",
     "noTower": "暂无保全派驻",

@@ -6,6 +6,7 @@ var core = require('../core.js');
 
 // 加载页面模块（IIFE 模式，执行后挂载到全局）
 require('./ui-assets.js');
+require('./ui-dialog.js');
 require('./view-home.js');
 require('./view-player-list.js');
 require('./view-add-player.js');
@@ -30,8 +31,18 @@ require('./view-debug.js');
     if (!container) return;
 
     var views = container.querySelectorAll('[data-view]');
+    var target = null;
     for (var i = 0; i < views.length; i++) {
-      views[i].hidden = views[i].getAttribute('data-view') !== name;
+      var isTarget = views[i].getAttribute('data-view') === name;
+      views[i].hidden = !isTarget;
+      if (isTarget) target = views[i];
+    }
+
+    // 视图切换入场动画（重复进入同一视图也重放）
+    if (target) {
+      target.classList.remove('ark-view-enter');
+      void target.offsetWidth;
+      target.classList.add('ark-view-enter');
     }
 
     var pages = (typeof Tapp !== 'undefined' && Tapp.pages) || {};

@@ -85,13 +85,16 @@ test('generatePlayerSummary: derives values from status, chars and buildings', a
         name: '博士',
         level: 120,
         registerTs: 1600000000,
-        mainStageProgress: 'main_1-8',
+        mainStageProgress: 'main_15-03',
         skinCnt: 42,
       },
       chars: [{ charId: 'char_001' }, { charId: 'char_001' }, { charId: 'char_002' }],
       charInfoMap: {
         char_001: { appellation: 'Amiya' },
         char_002: { appellation: "Kal'tsit" },
+      },
+      stageInfoMap: {
+        'main_15-03': { id: 'main_15-03', code: '15-4', name: '深渊之侧' },
       },
       building: { furniture: { total: 99 } },
       medal: { total: 7 },
@@ -102,7 +105,7 @@ test('generatePlayerSummary: derives values from status, chars and buildings', a
   assert.equal(summary.level, '120');
   assert.equal(summary.registerTs, 1600000000);
   const byKey = Object.fromEntries(summary.items);
-  assert.equal(byKey['assets.progress'], '1-8');
+  assert.equal(byKey['assets.progress'], '15-4');
   assert.equal(byKey['assets.operators'], '2');
   assert.equal(byKey['assets.skins'], '42');
   assert.equal(byKey['assets.furniture'], '99');
